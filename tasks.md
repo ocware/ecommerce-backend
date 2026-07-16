@@ -70,19 +70,19 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 5: Inventory
 
-- [ ] Create `inventory` module.
-- [ ] Track inventory by product variant.
-- [ ] Implement current stock.
-- [ ] Implement reserved stock.
-- [ ] Implement available stock calculation.
-- [ ] Implement inventory adjustments.
-- [ ] Implement low-stock thresholds.
-- [ ] Implement stock movement history.
-- [ ] Implement stock reservations during checkout.
-- [ ] Implement reservation expiration.
-- [ ] Implement stock restoration after cancellation.
-- [ ] Add tests for inventory calculations.
-- [ ] Add tests for concurrent purchases.
+- [x] Create `inventory` module.
+- [x] Track inventory by product variant.
+- [x] Implement current stock.
+- [x] Implement reserved stock.
+- [x] Implement available stock calculation.
+- [x] Implement inventory adjustments.
+- [x] Implement low-stock thresholds.
+- [x] Implement stock movement history.
+- [x] Implement stock reservations during checkout.
+- [x] Implement reservation expiration.
+- [x] Implement stock restoration after cancellation.
+- [x] Add tests for inventory calculations.
+- [x] Add tests for concurrent purchases.
 
 ## Phase 6: Cart
 
@@ -255,7 +255,7 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 - [ ] Orders store immutable purchase snapshots.
 - [ ] Payment redirects are never trusted without gateway or webhook verification.
 - [ ] Payment callbacks are idempotent.
-- [ ] Stock reservations prevent overselling.
+- [x] Stock reservations prevent overselling.
 - [ ] Failed or expired checkouts release reserved stock.
 - [ ] API routes are versioned.
 - [ ] Store and admin APIs are separated.

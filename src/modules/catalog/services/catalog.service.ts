@@ -104,6 +104,38 @@ export class CatalogService {
     );
   }
 
+  async getVariantReference(id: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        productId: true,
+        name: true,
+        sku: true,
+        status: true,
+      },
+    });
+
+    if (!variant) {
+      throw this.notFound('VARIANT_NOT_FOUND', 'Product variant was not found.');
+    }
+
+    return variant;
+  }
+
+  getVariantReferences(ids: string[]) {
+    return this.prisma.productVariant.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        productId: true,
+        name: true,
+        sku: true,
+        status: true,
+      },
+    });
+  }
+
   async listAdminProducts(query: ListProductsQueryDto) {
     const where = this.buildProductWhere(query, false);
     const orderBy = this.buildProductOrder(query.sort);
