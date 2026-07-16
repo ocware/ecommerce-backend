@@ -47,6 +47,17 @@ enum AddressType {
   BILLING
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProductVariantStatus {
+  ACTIVE
+  DISABLED
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -84,12 +95,12 @@ model StaffSession {
 }
 
 model PasswordResetToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  staffUserId String  @db.Uuid
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
+  id          String    @id @default(uuid()) @db.Uuid
+  staffUserId String    @db.Uuid
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
 
   staffUser StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
 
@@ -127,9 +138,9 @@ model Customer {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
-  sessions CustomerSession[]
-  addresses CustomerAddress[]
-  notes CustomerNote[]
+  sessions      CustomerSession[]
+  addresses     CustomerAddress[]
+  notes         CustomerNote[]
   guestProfiles GuestCheckoutProfile[]
 
   @@index([status])
@@ -154,20 +165,20 @@ model CustomerSession {
 }
 
 model CustomerAddress {
-  id          String      @id @default(uuid()) @db.Uuid
-  customerId  String      @db.Uuid
-  type        AddressType @default(SHIPPING)
-  fullName    String
-  phone       String
-  country     String
-  province    String
-  city        String
-  line1       String
-  line2       String?
-  postalCode  String?
-  isDefault   Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         String      @id @default(uuid()) @db.Uuid
+  customerId String      @db.Uuid
+  type       AddressType @default(SHIPPING)
+  fullName   String
+  phone      String
+  country    String
+  province   String
+  city       String
+  line1      String
+  line2      String?
+  postalCode String?
+  isDefault  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
@@ -189,17 +200,230 @@ model CustomerNote {
 }
 
 model GuestCheckoutProfile {
-  id        String   @id @default(uuid()) @db.Uuid
-  email     String?
-  phone     String?
-  name      String
-  metadata  Json?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  customerId String? @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String?
+  phone      String?
+  name       String
+  metadata   Json?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  customerId String?  @db.Uuid
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@index([expiresAt])
+}
+
+model Brand {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  slug           String   @unique
+  description    String?
+  logoUrl        String?
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  products Product[]
+
+  @@index([name])
+}
+
+model Category {
+  id             String   @id @default(uuid()) @db.Uuid
+  parentId       String?  @db.Uuid
+  name           String
+  slug           String   @unique
+  description    String?
+  imageUrl       String?
+  seoTitle       String?
+  seoDescription String?
+  position       Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  parent   Category?         @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[]        @relation("CategoryTree")
+  products ProductCategory[]
+
+  @@index([parentId])
+  @@index([isActive, position])
+  @@index([name])
+}
+
+model Product {
+  id               String        @id @default(uuid()) @db.Uuid
+  brandId          String?       @db.Uuid
+  name             String
+  slug             String        @unique
+  description      String?
+  shortDescription String?
+  status           ProductStatus @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  publishedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  brand             Brand?                  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  variants          ProductVariant[]
+  categories        ProductCategory[]
+  attributes        ProductAttribute[]
+  images            ProductImage[]
+  collections       ProductCollectionItem[]
+  relatedProducts   RelatedProduct[]        @relation("ProductRelations")
+  relatedToProducts RelatedProduct[]        @relation("RelatedToProductRelations")
+
+  @@index([brandId])
+  @@index([status, publishedAt])
+  @@index([name])
+}
+
+model ProductVariant {
+  id        String               @id @default(uuid()) @db.Uuid
+  productId String               @db.Uuid
+  name      String
+  sku       String               @unique
+  barcode   String?              @unique
+  status    ProductVariantStatus @default(ACTIVE)
+  isDefault Boolean              @default(false)
+  position  Int                  @default(0)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  prices          ProductPrice[]
+  images          ProductImage[]
+  attributeValues VariantAttributeValue[]
+
+  @@index([productId, status])
+  @@index([productId, position])
+}
+
+model ProductPrice {
+  id              String   @id @default(uuid()) @db.Uuid
+  variantId       String   @db.Uuid
+  currency        String   @db.VarChar(3)
+  amount          Decimal  @db.Decimal(18, 2)
+  compareAtAmount Decimal? @db.Decimal(18, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, currency])
+  @@index([currency])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid
+  variantId String?  @db.Uuid
+  url       String
+  altText   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([productId, position])
+  @@index([variantId])
+}
+
+model ProductAttribute {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values  ProductAttributeValue[]
+
+  @@unique([productId, name])
+  @@index([productId, position])
+}
+
+model ProductAttributeValue {
+  id          String   @id @default(uuid()) @db.Uuid
+  attributeId String   @db.Uuid
+  value       String
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  attribute ProductAttribute        @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  variants  VariantAttributeValue[]
+
+  @@unique([attributeId, value])
+  @@index([attributeId, position])
+}
+
+model VariantAttributeValue {
+  variantId        String @db.Uuid
+  attributeValueId String @db.Uuid
+
+  variant        ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attributeValue ProductAttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, attributeValueId])
+  @@index([attributeValueId])
+}
+
+model ProductCategory {
+  productId  String @db.Uuid
+  categoryId String @db.Uuid
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
+}
+
+model ProductCollection {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  slug           String   @unique
+  description    String?
+  seoTitle       String?
+  seoDescription String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  products ProductCollectionItem[]
+
+  @@index([isActive])
+  @@index([name])
+}
+
+model ProductCollectionItem {
+  collectionId String @db.Uuid
+  productId    String @db.Uuid
+  position     Int    @default(0)
+
+  collection ProductCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, productId])
+  @@index([productId])
+  @@index([collectionId, position])
+}
+
+model RelatedProduct {
+  productId        String @db.Uuid
+  relatedProductId String @db.Uuid
+  position         Int    @default(0)
+
+  product        Product @relation("ProductRelations", fields: [productId], references: [id], onDelete: Cascade)
+  relatedProduct Product @relation("RelatedToProductRelations", fields: [relatedProductId], references: [id], onDelete: Cascade)
+
+  @@id([productId, relatedProductId])
+  @@index([relatedProductId])
+  @@index([productId, position])
 }
