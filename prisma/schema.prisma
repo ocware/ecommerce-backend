@@ -81,6 +81,17 @@ enum CartStatus {
   ABANDONED
 }
 
+enum DiscountMode {
+  COUPON
+  AUTOMATIC
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -161,11 +172,13 @@ model Customer {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
-  sessions      CustomerSession[]
-  addresses     CustomerAddress[]
-  notes         CustomerNote[]
-  guestProfiles GuestCheckoutProfile[]
-  carts         Cart[]
+  sessions             CustomerSession[]
+  addresses            CustomerAddress[]
+  notes                CustomerNote[]
+  guestProfiles        GuestCheckoutProfile[]
+  carts                Cart[]
+  discountRestrictions DiscountCustomer[]
+  discountRedemptions  DiscountRedemption[]
 
   @@index([status])
   @@index([phone])
@@ -269,9 +282,10 @@ model Category {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  parent   Category?         @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children Category[]        @relation("CategoryTree")
-  products ProductCategory[]
+  parent               Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children             Category[]         @relation("CategoryTree")
+  products             ProductCategory[]
+  discountRestrictions DiscountCategory[]
 
   @@index([parentId])
   @@index([isActive, position])
@@ -292,14 +306,15 @@ model Product {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  brand             Brand?                  @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  variants          ProductVariant[]
-  categories        ProductCategory[]
-  attributes        ProductAttribute[]
-  images            ProductImage[]
-  collections       ProductCollectionItem[]
-  relatedProducts   RelatedProduct[]        @relation("ProductRelations")
-  relatedToProducts RelatedProduct[]        @relation("RelatedToProductRelations")
+  brand                Brand?                  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  variants             ProductVariant[]
+  categories           ProductCategory[]
+  attributes           ProductAttribute[]
+  images               ProductImage[]
+  collections          ProductCollectionItem[]
+  relatedProducts      RelatedProduct[]        @relation("ProductRelations")
+  relatedToProducts    RelatedProduct[]        @relation("RelatedToProductRelations")
+  discountRestrictions DiscountProduct[]
 
   @@index([brandId])
   @@index([status, publishedAt])
@@ -360,6 +375,86 @@ model CartItem {
 
   @@unique([cartId, variantId])
   @@index([variantId])
+}
+
+model Discount {
+  id                    String       @id @default(uuid()) @db.Uuid
+  name                  String
+  description           String?
+  code                  String?      @unique
+  mode                  DiscountMode
+  type                  DiscountType
+  value                 Decimal?     @db.Decimal(18, 2)
+  currency              String?      @db.VarChar(3)
+  minimumCartAmount     Decimal?     @db.Decimal(18, 2)
+  maximumDiscountAmount Decimal?     @db.Decimal(18, 2)
+  startsAt              DateTime?
+  endsAt                DateTime?
+  usageLimit            Int?
+  usageCount            Int          @default(0)
+  perCustomerUsageLimit Int?
+  priority              Int          @default(0)
+  isStackable           Boolean      @default(false)
+  isActive              Boolean      @default(true)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  products    DiscountProduct[]
+  categories  DiscountCategory[]
+  customers   DiscountCustomer[]
+  redemptions DiscountRedemption[]
+
+  @@index([mode, isActive, priority])
+  @@index([startsAt, endsAt])
+}
+
+model DiscountProduct {
+  discountId String @db.Uuid
+  productId  String @db.Uuid
+
+  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([discountId, productId])
+  @@index([productId])
+}
+
+model DiscountCategory {
+  discountId String @db.Uuid
+  categoryId String @db.Uuid
+
+  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([discountId, categoryId])
+  @@index([categoryId])
+}
+
+model DiscountCustomer {
+  discountId String @db.Uuid
+  customerId String @db.Uuid
+
+  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@id([discountId, customerId])
+  @@index([customerId])
+}
+
+model DiscountRedemption {
+  id             String   @id @default(uuid()) @db.Uuid
+  discountId     String   @db.Uuid
+  customerId     String?  @db.Uuid
+  orderReference String
+  amount         Decimal  @db.Decimal(18, 2)
+  createdAt      DateTime @default(now())
+
+  discount Discount  @relation(fields: [discountId], references: [id], onDelete: Restrict)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([discountId, orderReference])
+  @@index([customerId, discountId])
+  @@index([orderReference])
 }
 
 model InventoryItem {

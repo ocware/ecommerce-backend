@@ -77,6 +77,16 @@ export class CustomersService {
     return this.createSessionResponse(customer);
   }
 
+  async validateCustomerReferences(ids: string[]): Promise<void> {
+    const count = await this.prisma.customer.count({ where: { id: { in: ids } } });
+    if (count !== ids.length) {
+      throw new NotFoundException({
+        code: 'CUSTOMER_NOT_FOUND',
+        message: 'One or more customers were not found.',
+      });
+    }
+  }
+
   async login(dto: LoginCustomerDto): Promise<CustomerAuthResponse> {
     const customer = await this.prisma.customer.findUnique({
       where: {

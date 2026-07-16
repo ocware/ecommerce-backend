@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
 
+import { AuthModule } from '../auth/auth.module';
+import { CatalogModule } from '../catalog/catalog.module';
+import { CustomersModule } from '../customers/customers.module';
 import { DISCOUNT_EVALUATOR } from './contracts/discount-evaluator';
-import { NoopDiscountEvaluator } from './services/noop-discount-evaluator.service';
+import { AdminDiscountsController } from './controllers/admin-discounts.controller';
+import { DiscountsService } from './services/discounts.service';
 
 @Module({
+  imports: [AuthModule, CatalogModule, CustomersModule],
+  controllers: [AdminDiscountsController],
   providers: [
-    NoopDiscountEvaluator,
+    DiscountsService,
     {
       provide: DISCOUNT_EVALUATOR,
-      useExisting: NoopDiscountEvaluator,
+      useExisting: DiscountsService,
     },
   ],
-  exports: [DISCOUNT_EVALUATOR],
+  exports: [DiscountsService, DISCOUNT_EVALUATOR],
 })
 export class DiscountsModule {}

@@ -1,3 +1,5 @@
+import { DiscountType } from '@prisma/client';
+
 export const DISCOUNT_EVALUATOR = Symbol('DISCOUNT_EVALUATOR');
 
 export type DiscountEvaluationItem = {
@@ -18,14 +20,17 @@ export type DiscountEvaluationContext = {
 };
 
 export type DiscountApplication = {
+  discountId: string;
   code: string;
   label: string;
+  type: DiscountType;
   amount: string;
 };
 
 export type DiscountEvaluationResult = {
   discountTotal: string;
   shippingDiscountTotal: string;
+  freeShipping: boolean;
   applications: DiscountApplication[];
 };
 

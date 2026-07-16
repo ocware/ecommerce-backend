@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -15,6 +16,7 @@ import { CurrentCustomer } from '../../customers/decorators/current-customer.dec
 import { CustomerAuthGuard } from '../../customers/guards/customer-auth.guard';
 import { AuthenticatedCustomer } from '../../customers/types/authenticated-customer';
 import { AddCartItemDto } from '../dto/add-cart-item.dto';
+import { ApplyDiscountCodeDto } from '../dto/apply-discount-code.dto';
 import { CreateCartDto } from '../dto/create-cart.dto';
 import { MergeGuestCartDto } from '../dto/merge-guest-cart.dto';
 import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
@@ -75,5 +77,22 @@ export class StoreCustomerCartController {
     @CurrentCustomer() customer: AuthenticatedCustomer,
   ) {
     return this.cartService.mergeGuestCart(id, dto, customer);
+  }
+
+  @Put(':id/discount')
+  applyDiscount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ApplyDiscountCodeDto,
+    @CurrentCustomer() customer: AuthenticatedCustomer,
+  ) {
+    return this.cartService.applyCustomerDiscount(id, dto, customer);
+  }
+
+  @Delete(':id/discount')
+  removeDiscount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentCustomer() customer: AuthenticatedCustomer,
+  ) {
+    return this.cartService.removeCustomerDiscount(id, customer);
   }
 }

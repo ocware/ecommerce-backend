@@ -19,6 +19,7 @@ import {
 import { InventoryService } from '../../inventory/services/inventory.service';
 import { AuthenticatedCustomer } from '../../customers/types/authenticated-customer';
 import { AddCartItemDto } from '../dto/add-cart-item.dto';
+import { ApplyDiscountCodeDto } from '../dto/apply-discount-code.dto';
 import { CreateCartDto } from '../dto/create-cart.dto';
 import { MergeGuestCartDto } from '../dto/merge-guest-cart.dto';
 import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
@@ -148,6 +149,34 @@ export class CartService {
     return this.removeItem(cart, itemId);
   }
 
+  async applyGuestDiscount(id: string, dto: ApplyDiscountCodeDto, guestToken?: string) {
+    const cart = await this.requireActiveCart(id);
+    this.assertGuestAccess(cart, guestToken);
+    return this.applyDiscount(cart, dto.code);
+  }
+
+  async removeGuestDiscount(id: string, guestToken?: string) {
+    const cart = await this.requireActiveCart(id);
+    this.assertGuestAccess(cart, guestToken);
+    return this.removeDiscount(cart);
+  }
+
+  async applyCustomerDiscount(
+    id: string,
+    dto: ApplyDiscountCodeDto,
+    customer: AuthenticatedCustomer,
+  ) {
+    const cart = await this.requireActiveCart(id);
+    this.assertCustomerAccess(cart, customer.id);
+    return this.applyDiscount(cart, dto.code);
+  }
+
+  async removeCustomerDiscount(id: string, customer: AuthenticatedCustomer) {
+    const cart = await this.requireActiveCart(id);
+    this.assertCustomerAccess(cart, customer.id);
+    return this.removeDiscount(cart);
+  }
+
   async mergeGuestCart(
     customerCartId: string,
     dto: MergeGuestCartDto,
@@ -266,6 +295,34 @@ export class CartService {
     return this.calculateCart(await this.touchCart(cart));
   }
 
+  private async applyDiscount(cart: Cart, code: string) {
+    const normalizedCode = code.trim().toUpperCase();
+    await this.calculateCart({ ...cart, discountCode: normalizedCode });
+    const updated = await this.prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        discountCode: normalizedCode,
+        expiresAt: this.expirationFromNow(
+          cart.customerId ? this.customerLifetimeMs : this.guestLifetimeMs,
+        ),
+      },
+    });
+    return this.calculateCart(updated);
+  }
+
+  private async removeDiscount(cart: Cart) {
+    const updated = await this.prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        discountCode: null,
+        expiresAt: this.expirationFromNow(
+          cart.customerId ? this.customerLifetimeMs : this.guestLifetimeMs,
+        ),
+      },
+    });
+    return this.calculateCart(updated);
+  }
+
   private async validateCartQuantity(variantId: string, currency: string, quantity: number) {
     const [variant, availability] = await Promise.all([
       this.catalogService.getCartVariant(variantId, currency),
@@ -356,6 +413,7 @@ export class CartService {
       items,
       canCheckout: items.length > 0 && items.every((item) => item.isAvailable),
       discounts: discount.applications,
+      freeShipping: discount.freeShipping,
       totals: {
         subtotal: subtotal.toFixed(2),
         discountTotal: discountTotal.toFixed(2),

@@ -25,6 +25,7 @@ describe('Cart API', () => {
   const cartService = {
     createGuestCart: jest.fn(),
     addGuestItem: jest.fn(),
+    applyGuestDiscount: jest.fn(),
     createCustomerCart: jest.fn(),
     mergeGuestCart: jest.fn(),
   };
@@ -128,6 +129,31 @@ describe('Cart API', () => {
       .expect(({ body }: { body: ApiResponseBody }) => {
         expect(body.data.items?.[0].quantity).toBe(2);
       });
+  });
+
+  it('applies coupon codes to guest carts', async () => {
+    cartService.applyGuestDiscount.mockResolvedValue({
+      id: guestCartId,
+      discountCode: 'WELCOME10',
+      items: [{ quantity: 2 }],
+      totals: { discountTotal: '4.00', grandTotal: '35.98' },
+    });
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .put(`/api/v1/store/carts/${guestCartId}/discount`)
+      .set('x-cart-token', 'guest-token')
+      .send({ code: 'WELCOME10' })
+      .expect(200)
+      .expect(({ body }: { body: ApiResponseBody }) => {
+        expect(body.data.totals?.grandTotal).toBe('35.98');
+      });
+
+    expect(cartService.applyGuestDiscount).toHaveBeenCalledWith(
+      guestCartId,
+      { code: 'WELCOME10' },
+      'guest-token',
+    );
   });
 
   it('creates authenticated customer carts', async () => {

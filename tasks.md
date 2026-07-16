@@ -101,19 +101,19 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 7: Discounts
 
-- [ ] Create `discounts` module.
-- [ ] Implement coupon codes.
-- [ ] Implement automatic discounts.
-- [ ] Implement percentage discounts.
-- [ ] Implement fixed discounts.
-- [ ] Implement free shipping discounts.
-- [ ] Implement start and end dates.
-- [ ] Implement usage limits.
-- [ ] Implement minimum cart amount.
-- [ ] Implement product and category restrictions.
-- [ ] Implement customer restrictions.
-- [ ] Create `DiscountEvaluator`.
-- [ ] Add unit tests for pricing and discount rules.
+- [x] Create `discounts` module.
+- [x] Implement coupon codes.
+- [x] Implement automatic discounts.
+- [x] Implement percentage discounts.
+- [x] Implement fixed discounts.
+- [x] Implement free shipping discounts.
+- [x] Implement start and end dates.
+- [x] Implement usage limits.
+- [x] Implement minimum cart amount.
+- [x] Implement product and category restrictions.
+- [x] Implement customer restrictions.
+- [x] Create `DiscountEvaluator`.
+- [x] Add unit tests for pricing and discount rules.
 
 ## Phase 8: Checkout And Orders
 

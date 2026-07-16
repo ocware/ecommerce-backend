@@ -1,4 +1,10 @@
-import { CartStatus, Prisma, ProductStatus, ProductVariantStatus } from '@prisma/client';
+import {
+  CartStatus,
+  DiscountType,
+  Prisma,
+  ProductStatus,
+  ProductVariantStatus,
+} from '@prisma/client';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
@@ -72,7 +78,16 @@ describe('CartService', () => {
         Promise.resolve({
           discountTotal: '5.00',
           shippingDiscountTotal: '0.00',
-          applications: [{ code: 'AUTO', label: 'Automatic discount', amount: '5.00' }],
+          freeShipping: false,
+          applications: [
+            {
+              discountId: 'discount-id',
+              code: 'AUTO',
+              label: 'Automatic discount',
+              type: DiscountType.FIXED_AMOUNT,
+              amount: '5.00',
+            },
+          ],
         }),
       ),
     };

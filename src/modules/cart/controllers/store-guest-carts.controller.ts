@@ -8,10 +8,12 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 
 import { AddCartItemDto } from '../dto/add-cart-item.dto';
+import { ApplyDiscountCodeDto } from '../dto/apply-discount-code.dto';
 import { CreateCartDto } from '../dto/create-cart.dto';
 import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
 import { CartService } from '../services/cart.service';
@@ -61,5 +63,24 @@ export class StoreGuestCartsController {
     @Headers('x-cart-token') guestToken?: string,
   ) {
     return this.cartService.removeGuestItem(id, itemId, guestToken);
+  }
+
+  @Put(':id/discount')
+  @ApiHeader({ name: 'x-cart-token', required: true })
+  applyDiscount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ApplyDiscountCodeDto,
+    @Headers('x-cart-token') guestToken?: string,
+  ) {
+    return this.cartService.applyGuestDiscount(id, dto, guestToken);
+  }
+
+  @Delete(':id/discount')
+  @ApiHeader({ name: 'x-cart-token', required: true })
+  removeDiscount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-cart-token') guestToken?: string,
+  ) {
+    return this.cartService.removeGuestDiscount(id, guestToken);
   }
 }

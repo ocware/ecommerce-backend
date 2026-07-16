@@ -170,6 +170,14 @@ export class CatalogService {
     return variant;
   }
 
+  validateProductReferences(ids: string[]): Promise<void> {
+    return this.requireAllProducts(ids);
+  }
+
+  validateCategoryReferences(ids: string[]): Promise<void> {
+    return this.requireAllCategories(ids);
+  }
+
   async listAdminProducts(query: ListProductsQueryDto) {
     const where = this.buildProductWhere(query, false);
     const orderBy = this.buildProductOrder(query.sort);

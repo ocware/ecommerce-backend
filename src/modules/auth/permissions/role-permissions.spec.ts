@@ -10,4 +10,8 @@ describe('role permissions', () => {
   it('does not allow support staff to manage staff', () => {
     expect(roleHasPermission(StaffRole.SUPPORT, Permission.ManageStaff)).toBe(false);
   });
+
+  it('allows product managers to manage discounts', () => {
+    expect(roleHasPermission(StaffRole.PRODUCT_MANAGER, Permission.ManageDiscounts)).toBe(true);
+  });
 });

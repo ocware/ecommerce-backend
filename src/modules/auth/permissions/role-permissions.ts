@@ -4,7 +4,11 @@ import { Permission } from './permission';
 export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
   [StaffRole.OWNER]: Object.values(Permission),
   [StaffRole.ADMIN]: Object.values(Permission),
-  [StaffRole.PRODUCT_MANAGER]: [Permission.ManageProducts, Permission.ViewReports],
+  [StaffRole.PRODUCT_MANAGER]: [
+    Permission.ManageProducts,
+    Permission.ManageDiscounts,
+    Permission.ViewReports,
+  ],
   [StaffRole.ORDER_MANAGER]: [
     Permission.ManageOrders,
     Permission.ManageCustomers,
