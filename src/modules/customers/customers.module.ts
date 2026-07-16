@@ -12,6 +12,6 @@ import { CustomersService } from './services/customers.service';
   imports: [AuthModule],
   controllers: [StoreCustomersController, AdminCustomersController],
   providers: [CustomersService, CustomerPasswordService, CustomerTokenService, CustomerAuthGuard],
-  exports: [CustomersService, CustomerAuthGuard],
+  exports: [CustomersService, CustomerTokenService, CustomerAuthGuard],
 })
 export class CustomersModule {}

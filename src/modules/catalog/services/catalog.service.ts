@@ -136,6 +136,40 @@ export class CatalogService {
     });
   }
 
+  async getCartVariant(id: string, currency: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        status: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            status: true,
+            categories: { select: { categoryId: true } },
+            images: { orderBy: { position: 'asc' }, take: 1 },
+          },
+        },
+        images: { orderBy: { position: 'asc' }, take: 1 },
+        prices: {
+          where: { currency },
+          select: { currency: true, amount: true, compareAtAmount: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (!variant) {
+      throw this.notFound('VARIANT_NOT_FOUND', 'Product variant was not found.');
+    }
+
+    return variant;
+  }
+
   async listAdminProducts(query: ListProductsQueryDto) {
     const where = this.buildProductWhere(query, false);
     const orderBy = this.buildProductOrder(query.sort);

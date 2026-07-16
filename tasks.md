@@ -86,18 +86,18 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 6: Cart
 
-- [ ] Create `cart` module.
-- [ ] Implement guest carts.
-- [ ] Implement customer carts.
-- [ ] Add product to cart.
-- [ ] Remove product from cart.
-- [ ] Change cart item quantity.
-- [ ] Validate stock during cart operations.
-- [ ] Recalculate cart totals from current data.
-- [ ] Apply discounts through the discount evaluator.
-- [ ] Merge guest cart after login.
-- [ ] Implement cart expiration.
-- [ ] Return subtotal, discount total, shipping total, tax total, and grand total.
+- [x] Create `cart` module.
+- [x] Implement guest carts.
+- [x] Implement customer carts.
+- [x] Add product to cart.
+- [x] Remove product from cart.
+- [x] Change cart item quantity.
+- [x] Validate stock during cart operations.
+- [x] Recalculate cart totals from current data.
+- [x] Apply discounts through the discount evaluator.
+- [x] Merge guest cart after login.
+- [x] Implement cart expiration.
+- [x] Return subtotal, discount total, shipping total, tax total, and grand total.
 
 ## Phase 7: Discounts
 
