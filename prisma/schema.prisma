@@ -29,6 +29,24 @@ enum StaffSessionStatus {
   EXPIRED
 }
 
+enum CustomerStatus {
+  ACTIVE
+  GUEST
+  SUSPENDED
+  DISABLED
+}
+
+enum CustomerSessionStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -95,4 +113,93 @@ model AuditLog {
   @@index([staffUserId])
   @@index([action])
   @@index([createdAt])
+}
+
+model Customer {
+  id               String         @id @default(uuid()) @db.Uuid
+  email            String?        @unique
+  phone            String?
+  name             String
+  passwordHash     String?
+  status           CustomerStatus @default(ACTIVE)
+  marketingConsent Boolean        @default(false)
+  lastLoginAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  sessions CustomerSession[]
+  addresses CustomerAddress[]
+  notes CustomerNote[]
+  guestProfiles GuestCheckoutProfile[]
+
+  @@index([status])
+  @@index([phone])
+}
+
+model CustomerSession {
+  id               String                @id @default(uuid()) @db.Uuid
+  customerId       String                @db.Uuid
+  refreshTokenHash String                @unique
+  status           CustomerSessionStatus @default(ACTIVE)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model CustomerAddress {
+  id          String      @id @default(uuid()) @db.Uuid
+  customerId  String      @db.Uuid
+  type        AddressType @default(SHIPPING)
+  fullName    String
+  phone       String
+  country     String
+  province    String
+  city        String
+  line1       String
+  line2       String?
+  postalCode  String?
+  isDefault   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([type])
+}
+
+model CustomerNote {
+  id          String   @id @default(uuid()) @db.Uuid
+  customerId  String   @db.Uuid
+  staffUserId String?  @db.Uuid
+  note        String
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([staffUserId])
+}
+
+model GuestCheckoutProfile {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String?
+  phone     String?
+  name      String
+  metadata  Json?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  customerId String? @db.Uuid
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([expiresAt])
 }

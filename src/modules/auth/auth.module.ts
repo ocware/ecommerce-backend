@@ -21,6 +21,6 @@ import { TokenService } from './services/token.service';
     RolesGuard,
     PermissionsGuard,
   ],
-  exports: [AuthService, StaffAuthGuard, RolesGuard, PermissionsGuard],
+  exports: [AuthService, TokenService, StaffAuthGuard, RolesGuard, PermissionsGuard],
 })
 export class AuthModule {}
