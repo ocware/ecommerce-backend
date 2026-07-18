@@ -159,19 +159,19 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 10: Shipping
 
-- [ ] Create `shipping` module.
-- [ ] Define `ShippingProvider` interface.
-- [ ] Implement shipping methods.
-- [ ] Implement shipping zones.
-- [ ] Implement shipping prices.
-- [ ] Implement free-shipping conditions.
-- [ ] Implement shipment records.
-- [ ] Implement tracking codes.
-- [ ] Implement shipment status.
-- [ ] Implement estimated delivery.
-- [ ] Implement local pickup.
-- [ ] Publish `ShipmentCreated`.
-- [ ] Publish `ShipmentDelivered`.
+- [x] Create `shipping` module.
+- [x] Define `ShippingProvider` interface.
+- [x] Implement shipping methods.
+- [x] Implement shipping zones.
+- [x] Implement shipping prices.
+- [x] Implement free-shipping conditions.
+- [x] Implement shipment records.
+- [x] Implement tracking codes.
+- [x] Implement shipment status.
+- [x] Implement estimated delivery.
+- [x] Implement local pickup.
+- [x] Publish `ShipmentCreated`.
+- [x] Publish `ShipmentDelivered`.
 
 ## Phase 11: Media
 

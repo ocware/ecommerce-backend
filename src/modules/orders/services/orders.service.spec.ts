@@ -12,6 +12,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CartService, CheckoutCartView } from '../../cart/services/cart.service';
 import { DiscountsService } from '../../discounts/services/discounts.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
+import { ShippingRatesService } from '../../shipping/services/shipping-rates.service';
 import { OrderEventPublisher } from './order-event-publisher.service';
 import { OrdersService } from './orders.service';
 
@@ -88,6 +89,7 @@ describe('OrdersService checkout orchestration', () => {
     order: {
       findUnique: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
       updateMany: jest.fn(),
       count: jest.fn(),
       findMany: jest.fn(),
@@ -112,12 +114,14 @@ describe('OrdersService checkout orchestration', () => {
     releaseRedemptions: jest.fn(),
   };
   const eventPublisher = { publish: jest.fn() };
+  const shippingRatesService = { quoteForCheckout: jest.fn() };
   const service = new OrdersService(
     prisma as unknown as PrismaService,
     cartService as unknown as CartService,
     inventoryService as unknown as InventoryService,
     discountsService as unknown as DiscountsService,
     eventPublisher as unknown as OrderEventPublisher,
+    shippingRatesService as unknown as ShippingRatesService,
   );
 
   beforeEach(() => {
@@ -153,10 +157,9 @@ describe('OrdersService checkout orchestration', () => {
             unknown
           >,
           billingAddressSnapshot: checkoutDto.billingAddress,
-          pricingSnapshot: expect.objectContaining({ totals: cart.totals }) as Record<
-            string,
-            unknown
-          >,
+          pricingSnapshot: expect.objectContaining({
+            totals: expect.objectContaining(cart.totals) as Record<string, unknown>,
+          }) as Record<string, unknown>,
           items: {
             create: [
               expect.objectContaining({
@@ -176,6 +179,51 @@ describe('OrdersService checkout orchestration', () => {
       expect.objectContaining({ name: 'OrderCreated', orderId: result.id }),
     );
     expect(result.totals.grandTotal).toBe('40.00');
+  });
+
+  it('adds a verified shipping quote to the immutable order pricing snapshot', async () => {
+    const shippingMethodId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    shippingRatesService.quoteForCheckout.mockResolvedValue({
+      methodId: shippingMethodId,
+      code: 'express',
+      name: 'Express delivery',
+      type: 'EXPRESS',
+      provider: 'LOCAL',
+      currency: 'USD',
+      price: '10.00',
+      discount: '0.00',
+      total: '10.00',
+      freeShipping: false,
+      estimatedDeliveryAt: new Date(Date.now() + 86_400_000),
+      estimatedMinDays: 1,
+      estimatedMaxDays: 1,
+      pickupInstructions: null,
+      pickupAddress: null,
+    });
+
+    await service.checkoutCustomer({ ...checkoutDto, shippingMethodId }, customer);
+
+    expect(shippingRatesService.quoteForCheckout).toHaveBeenCalledWith(
+      shippingMethodId,
+      checkoutDto.shippingAddress,
+      '50.00',
+      'USD',
+      false,
+    );
+    expect(prisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          shippingMethodId,
+          shippingTotal: new Prisma.Decimal('10.00'),
+          shippingDiscountTotal: new Prisma.Decimal('0.00'),
+          grandTotal: new Prisma.Decimal('50.00'),
+          shippingMethodSnapshot: expect.objectContaining({
+            code: 'express',
+            provider: 'LOCAL',
+          }) as Record<string, unknown>,
+        }) as Record<string, unknown>,
+      }),
+    );
   });
 
   it('releases earlier reservations when a later cart item cannot be reserved', async () => {
@@ -232,12 +280,42 @@ describe('OrdersService checkout orchestration', () => {
     expect(result.status).toBe(OrderStatus.CANCELLED);
   });
 
+  it('returns processing orders to confirmed when all active shipments are removed', async () => {
+    const processing = makeOrder({
+      status: OrderStatus.PROCESSING,
+      fulfillmentStatus: OrderFulfillmentStatus.PROCESSING,
+    });
+    const unfulfilled = makeOrder({
+      status: OrderStatus.CONFIRMED,
+      fulfillmentStatus: OrderFulfillmentStatus.UNFULFILLED,
+    });
+    prisma.order.findUnique.mockReset();
+    prisma.order.findUnique.mockResolvedValueOnce(processing);
+    prisma.order.update.mockResolvedValueOnce(unfulfilled);
+
+    const result = await service.updateFulfillmentStatus(
+      processing.id,
+      OrderFulfillmentStatus.UNFULFILLED,
+    );
+
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          fulfillmentStatus: OrderFulfillmentStatus.UNFULFILLED,
+          status: OrderStatus.CONFIRMED,
+        },
+      }),
+    );
+    expect(result.status).toBe(OrderStatus.CONFIRMED);
+  });
+
   function makeOrder(overrides: Record<string, unknown> = {}) {
     return {
       id: '88888888-8888-4888-8888-888888888888',
       orderNumber: 'ORD-20260718-8888888888',
       cartId,
       customerId,
+      shippingMethodId: null,
       status: OrderStatus.PENDING,
       paymentStatus: OrderPaymentStatus.PENDING,
       fulfillmentStatus: OrderFulfillmentStatus.UNFULFILLED,
@@ -253,6 +331,7 @@ describe('OrdersService checkout orchestration', () => {
       billingAddressSnapshot: checkoutDto.billingAddress,
       shippingAddressSnapshot: checkoutDto.shippingAddress,
       pricingSnapshot: { totals: cart.totals },
+      shippingMethodSnapshot: null,
       invoiceInformation: null,
       customerNote: checkoutDto.customerNote,
       cancellationReason: null,

@@ -159,6 +159,22 @@ enum PaymentRefundStatus {
   FAILED
 }
 
+enum ShippingMethodType {
+  STANDARD
+  EXPRESS
+  LOCAL_PICKUP
+}
+
+enum ShipmentStatus {
+  PENDING
+  CREATED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -532,6 +548,7 @@ model Order {
   orderNumber              String                 @unique
   cartId                   String                 @unique @db.Uuid
   customerId               String?                @db.Uuid
+  shippingMethodId         String?                @db.Uuid
   status                   OrderStatus            @default(PENDING)
   paymentStatus            OrderPaymentStatus     @default(PENDING)
   fulfillmentStatus        OrderFulfillmentStatus @default(UNFULFILLED)
@@ -547,6 +564,7 @@ model Order {
   billingAddressSnapshot   Json
   shippingAddressSnapshot  Json
   pricingSnapshot          Json
+  shippingMethodSnapshot   Json?
   invoiceInformation       Json?
   customerNote             String?
   cancellationReason       String?
@@ -561,11 +579,14 @@ model Order {
   internalNotes   OrderInternalNote[]
   paymentAttempts PaymentAttempt[]
   paymentRefunds  PaymentRefund[]
+  shippingMethod  ShippingMethod?     @relation(fields: [shippingMethodId], references: [id], onDelete: SetNull)
+  shipments       Shipment[]
 
   @@index([customerId, createdAt])
   @@index([status, createdAt])
   @@index([paymentStatus, createdAt])
   @@index([fulfillmentStatus, createdAt])
+  @@index([shippingMethodId])
 }
 
 model OrderItem {
@@ -697,6 +718,109 @@ model PaymentRefund {
   @@index([paymentAttemptId, createdAt])
   @@index([orderId, createdAt])
   @@index([status, createdAt])
+}
+
+model ShippingMethod {
+  id                    String             @id @default(uuid()) @db.Uuid
+  code                  String             @unique
+  name                  String
+  description           String?
+  provider              String
+  type                  ShippingMethodType @default(STANDARD)
+  currency              String             @db.VarChar(3)
+  defaultPrice          Decimal            @db.Decimal(18, 2)
+  freeShippingThreshold Decimal?           @db.Decimal(18, 2)
+  estimatedMinDays      Int
+  estimatedMaxDays      Int
+  pickupInstructions    String?
+  pickupAddress         Json?
+  isActive              Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  rates     ShippingRate[]
+  orders    Order[]
+  shipments Shipment[]
+
+  @@index([isActive, type])
+  @@index([provider])
+}
+
+model ShippingZone {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  countries String[]
+  provinces String[]
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rates ShippingRate[]
+
+  @@index([isActive, priority])
+}
+
+model ShippingRate {
+  id                    String   @id @default(uuid()) @db.Uuid
+  shippingMethodId      String   @db.Uuid
+  shippingZoneId        String   @db.Uuid
+  price                 Decimal  @db.Decimal(18, 2)
+  freeShippingThreshold Decimal? @db.Decimal(18, 2)
+  minimumOrderAmount    Decimal? @db.Decimal(18, 2)
+  maximumOrderAmount    Decimal? @db.Decimal(18, 2)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  shippingMethod ShippingMethod @relation(fields: [shippingMethodId], references: [id], onDelete: Cascade)
+  shippingZone   ShippingZone   @relation(fields: [shippingZoneId], references: [id], onDelete: Cascade)
+
+  @@unique([shippingMethodId, shippingZoneId])
+  @@index([shippingZoneId, isActive])
+}
+
+model Shipment {
+  id                  String         @id @default(uuid()) @db.Uuid
+  orderId             String         @db.Uuid
+  shippingMethodId    String         @db.Uuid
+  provider            String
+  providerReference   String?
+  trackingCode        String?
+  status              ShipmentStatus @default(PENDING)
+  cost                Decimal        @db.Decimal(18, 2)
+  currency            String         @db.VarChar(3)
+  addressSnapshot     Json
+  estimatedDeliveryAt DateTime?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+  cancelledAt         DateTime?
+  metadata            Json?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  order          Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  shippingMethod ShippingMethod          @relation(fields: [shippingMethodId], references: [id], onDelete: Restrict)
+  statusHistory  ShipmentStatusHistory[]
+
+  @@unique([provider, providerReference])
+  @@index([orderId, createdAt])
+  @@index([trackingCode])
+  @@index([status, updatedAt])
+}
+
+model ShipmentStatusHistory {
+  id          String         @id @default(uuid()) @db.Uuid
+  shipmentId  String         @db.Uuid
+  status      ShipmentStatus
+  description String?
+  metadata    Json?
+  occurredAt  DateTime       @default(now())
+  createdAt   DateTime       @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId, occurredAt])
 }
 
 model InventoryItem {

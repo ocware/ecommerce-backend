@@ -11,6 +11,11 @@ export class CheckoutDto {
   @IsUUID()
   cartId!: string;
 
+  @ApiProperty({ format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  shippingMethodId?: string;
+
   @ApiProperty({ type: CheckoutCustomerDto, required: false })
   @IsOptional()
   @ValidateNested()

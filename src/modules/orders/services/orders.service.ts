@@ -21,6 +21,7 @@ import { CartService, CheckoutCartView } from '../../cart/services/cart.service'
 import { AuthenticatedCustomer } from '../../customers/types/authenticated-customer';
 import { DiscountsService } from '../../discounts/services/discounts.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
+import { ShippingRatesService } from '../../shipping/services/shipping-rates.service';
 import { AddOrderNoteDto } from '../dto/add-order-note.dto';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { CheckoutCustomerDto } from '../dto/checkout-customer.dto';
@@ -53,6 +54,21 @@ export type PaymentOrderView = {
   inventoryReservationIds: string[];
 };
 
+export type ShippingOrderView = {
+  id: string;
+  orderNumber: string;
+  cartId: string;
+  customerId: string | null;
+  status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  fulfillmentStatus: OrderFulfillmentStatus;
+  currency: string;
+  shippingCost: string;
+  shippingMethodId: string | null;
+  shippingMethod: Prisma.JsonValue | null;
+  shippingAddress: Prisma.JsonValue;
+};
+
 @Injectable()
 export class OrdersService {
   private readonly reservationLifetimeMs = 15 * 60 * 1000;
@@ -63,6 +79,7 @@ export class OrdersService {
     private readonly inventoryService: InventoryService,
     private readonly discountsService: DiscountsService,
     private readonly eventPublisher: OrderEventPublisher,
+    private readonly shippingRatesService: ShippingRatesService,
   ) {}
 
   checkoutCustomer(dto: CheckoutDto, customer: AuthenticatedCustomer) {
@@ -212,6 +229,60 @@ export class OrdersService {
     return this.toPaymentOrder(updated);
   }
 
+  async getShippingOrderForCustomer(
+    id: string,
+    customer: AuthenticatedCustomer,
+  ): Promise<ShippingOrderView> {
+    const order = await this.requireOrder(id);
+    this.assertCustomerAccess(order, customer.id);
+    return this.toShippingOrder(order);
+  }
+
+  async getShippingOrderForGuest(id: string, guestToken?: string): Promise<ShippingOrderView> {
+    const order = await this.requireOrder(id);
+    if (order.customerId) {
+      throw new UnauthorizedException({
+        code: 'ORDER_ACCESS_DENIED',
+        message: 'This order is not a guest order.',
+      });
+    }
+    await this.cartService.verifyCheckoutAccess(order.cartId, { guestToken });
+    return this.toShippingOrder(order);
+  }
+
+  async getShippingOrderForAdmin(id: string): Promise<ShippingOrderView> {
+    return this.toShippingOrder(await this.requireOrder(id));
+  }
+
+  async updateFulfillmentStatus(
+    id: string,
+    fulfillmentStatus: OrderFulfillmentStatus,
+  ): Promise<ShippingOrderView> {
+    const order = await this.requireOrder(id);
+    if (order.status === OrderStatus.CANCELLED) {
+      throw new ConflictException({
+        code: 'CANCELLED_ORDER_CANNOT_BE_FULFILLED',
+        message: 'A cancelled order cannot be fulfilled.',
+      });
+    }
+    const status =
+      fulfillmentStatus === OrderFulfillmentStatus.FULFILLED
+        ? OrderStatus.COMPLETED
+        : fulfillmentStatus === OrderFulfillmentStatus.PROCESSING ||
+            fulfillmentStatus === OrderFulfillmentStatus.PARTIALLY_FULFILLED
+          ? OrderStatus.PROCESSING
+          : fulfillmentStatus === OrderFulfillmentStatus.UNFULFILLED &&
+              order.status === OrderStatus.PROCESSING
+            ? OrderStatus.CONFIRMED
+            : order.status;
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: { fulfillmentStatus, status },
+      include: orderInclude,
+    });
+    return this.toShippingOrder(updated);
+  }
+
   private async checkout(
     dto: CheckoutDto,
     access: CheckoutAccess,
@@ -228,6 +299,18 @@ export class OrdersService {
     }
 
     const cart = await this.cartService.prepareCheckout(dto.cartId, access);
+    const shippingQuote = dto.shippingMethodId
+      ? await this.shippingRatesService.quoteForCheckout(
+          dto.shippingMethodId,
+          dto.shippingAddress,
+          cart.totals.subtotal,
+          cart.currency,
+          cart.freeShipping,
+        )
+      : null;
+    const shippingTotal = new Prisma.Decimal(shippingQuote?.price ?? cart.totals.shippingTotal);
+    const shippingDiscountTotal = new Prisma.Decimal(shippingQuote?.discount ?? 0);
+    const grandTotal = new Prisma.Decimal(cart.totals.grandTotal).plus(shippingQuote?.total ?? 0);
     const orderId = randomUUID();
     const orderNumber = this.createOrderNumber(orderId);
     const reservationEnds = new Date(
@@ -256,12 +339,14 @@ export class OrdersService {
           orderNumber,
           cartId: cart.id,
           customerId: cart.customerId,
+          shippingMethodId: shippingQuote?.methodId,
           currency: cart.currency,
           subtotal: new Prisma.Decimal(cart.totals.subtotal),
           discountTotal: new Prisma.Decimal(cart.totals.discountTotal),
-          shippingTotal: new Prisma.Decimal(cart.totals.shippingTotal),
+          shippingTotal,
+          shippingDiscountTotal,
           taxTotal: new Prisma.Decimal(cart.totals.taxTotal),
-          grandTotal: new Prisma.Decimal(cart.totals.grandTotal),
+          grandTotal,
           customerSnapshot: { ...customerSnapshot },
           billingAddressSnapshot: { ...dto.billingAddress },
           shippingAddressSnapshot: { ...dto.shippingAddress },
@@ -269,8 +354,27 @@ export class OrdersService {
             discountCode: cart.discountCode,
             discounts: cart.discounts.map((discount) => ({ ...discount })),
             freeShipping: cart.freeShipping,
-            totals: { ...cart.totals },
+            totals: {
+              ...cart.totals,
+              shippingTotal: shippingTotal.toFixed(2),
+              shippingDiscountTotal: shippingDiscountTotal.toFixed(2),
+              grandTotal: grandTotal.toFixed(2),
+            },
           },
+          shippingMethodSnapshot: shippingQuote
+            ? {
+                methodId: shippingQuote.methodId,
+                code: shippingQuote.code,
+                name: shippingQuote.name,
+                type: shippingQuote.type,
+                provider: shippingQuote.provider,
+                estimatedMinDays: shippingQuote.estimatedMinDays,
+                estimatedMaxDays: shippingQuote.estimatedMaxDays,
+                estimatedDeliveryAt: shippingQuote.estimatedDeliveryAt.toISOString(),
+                pickupInstructions: shippingQuote.pickupInstructions,
+                pickupAddress: shippingQuote.pickupAddress,
+              }
+            : undefined,
           invoiceInformation: dto.invoiceInformation ? { ...dto.invoiceInformation } : undefined,
           customerNote: dto.customerNote,
           inventoryReservationEnds: reservationEnds,
@@ -529,6 +633,7 @@ export class OrdersService {
       customer: order.customerSnapshot,
       billingAddress: order.billingAddressSnapshot,
       shippingAddress: order.shippingAddressSnapshot,
+      shippingMethod: order.shippingMethodSnapshot,
       invoiceInformation: order.invoiceInformation,
       customerNote: order.customerNote,
       cancellationReason: order.cancellationReason,
@@ -577,6 +682,23 @@ export class OrdersService {
       currency: order.currency,
       customer: order.customerSnapshot,
       inventoryReservationIds: order.items.map((item) => item.inventoryReservationId),
+    };
+  }
+
+  private toShippingOrder(order: OrderRecord): ShippingOrderView {
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      cartId: order.cartId,
+      customerId: order.customerId,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      fulfillmentStatus: order.fulfillmentStatus,
+      currency: order.currency,
+      shippingCost: order.shippingTotal.minus(order.shippingDiscountTotal).toFixed(2),
+      shippingMethodId: order.shippingMethodId,
+      shippingMethod: order.shippingMethodSnapshot,
+      shippingAddress: order.shippingAddressSnapshot,
     };
   }
 }
