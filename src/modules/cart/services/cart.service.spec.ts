@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
+import { SettingsService } from '../../settings/services/settings.service';
 import { CartTokenService } from './cart-token.service';
 import { CartService } from './cart.service';
 
@@ -17,6 +18,9 @@ describe('CartService', () => {
   const variantId = '22222222-2222-4222-8222-222222222222';
   const tokenService = new CartTokenService();
   const guest = tokenService.createGuestToken();
+  const settings = {
+    get: jest.fn(() => Promise.resolve({ currency: 'USD', taxEnabled: false, taxRate: '0.0000' })),
+  };
   const cart = {
     id: cartId,
     customerId: null,
@@ -59,7 +63,12 @@ describe('CartService', () => {
     ],
   };
 
-  it('recalculates current prices and the complete totals response', async () => {
+  it('recalculates current prices, discounts, and database-configured tax', async () => {
+    settings.get.mockResolvedValueOnce({
+      currency: 'USD',
+      taxEnabled: true,
+      taxRate: '8.2500',
+    });
     const prisma = {
       cart: { findUnique: jest.fn(() => cart) },
       cartItem: { findMany: jest.fn(() => [item]) },
@@ -97,6 +106,7 @@ describe('CartService', () => {
       inventory as unknown as InventoryService,
       tokenService,
       discounts,
+      settings as unknown as SettingsService,
     );
 
     const result = await service.getGuestCart(cartId, guest.token);
@@ -106,8 +116,8 @@ describe('CartService', () => {
       subtotal: '39.98',
       discountTotal: '5.00',
       shippingTotal: '0.00',
-      taxTotal: '0.00',
-      grandTotal: '34.98',
+      taxTotal: '2.89',
+      grandTotal: '37.87',
     });
     expect(result.canCheckout).toBe(true);
     expect(discounts.evaluate).toHaveBeenCalledWith(
@@ -138,6 +148,7 @@ describe('CartService', () => {
       inventory as unknown as InventoryService,
       tokenService,
       { evaluate: jest.fn() },
+      settings as unknown as SettingsService,
     );
 
     await expect(
@@ -162,6 +173,7 @@ describe('CartService', () => {
       {} as InventoryService,
       tokenService,
       { evaluate: jest.fn() },
+      settings as unknown as SettingsService,
     );
 
     await expect(service.getGuestCart(cartId, guest.token)).rejects.toMatchObject({

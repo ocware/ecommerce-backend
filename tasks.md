@@ -200,12 +200,12 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 13: Settings
 
-- [ ] Create `settings` module.
-- [ ] Store editable shop settings in the database.
-- [ ] Add settings for shop name, currency, tax, default shipping method, order prefix, low-stock threshold, and guest checkout.
-- [ ] Keep technical secrets in environment variables.
-- [ ] Add settings APIs for admin users.
-- [ ] Prevent shop-specific source-code conditionals.
+- [x] Create `settings` module.
+- [x] Store editable shop settings in the database.
+- [x] Add settings for shop name, currency, tax, default shipping method, order prefix, low-stock threshold, and guest checkout.
+- [x] Keep technical secrets in environment variables.
+- [x] Add settings APIs for admin users.
+- [x] Prevent shop-specific source-code conditionals.
 
 ## Phase 14: Reports
 

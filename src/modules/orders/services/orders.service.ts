@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -22,6 +23,7 @@ import { AuthenticatedCustomer } from '../../customers/types/authenticated-custo
 import { DiscountsService } from '../../discounts/services/discounts.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import { ShippingRatesService } from '../../shipping/services/shipping-rates.service';
+import { SettingsService } from '../../settings/services/settings.service';
 import { AddOrderNoteDto } from '../dto/add-order-note.dto';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { CheckoutCustomerDto } from '../dto/checkout-customer.dto';
@@ -89,6 +91,7 @@ export class OrdersService {
     private readonly discountsService: DiscountsService,
     private readonly eventPublisher: OrderEventPublisher,
     private readonly shippingRatesService: ShippingRatesService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   checkoutCustomer(dto: CheckoutDto, customer: AuthenticatedCustomer) {
@@ -309,6 +312,13 @@ export class OrdersService {
     access: CheckoutAccess,
     customerSnapshot: CheckoutCustomerDto,
   ) {
+    const settings = await this.settingsService.get();
+    if ('guestToken' in access && !settings.guestCheckoutEnabled) {
+      throw new ForbiddenException({
+        code: 'GUEST_CHECKOUT_DISABLED',
+        message: 'Guest checkout is disabled for this shop.',
+      });
+    }
     this.assertContactDetails(customerSnapshot);
     const existing = await this.prisma.order.findUnique({
       where: { cartId: dto.cartId },
@@ -320,9 +330,10 @@ export class OrdersService {
     }
 
     const cart = await this.cartService.prepareCheckout(dto.cartId, access);
-    const shippingQuote = dto.shippingMethodId
+    const shippingMethodId = dto.shippingMethodId ?? settings.defaultShippingMethodId;
+    const shippingQuote = shippingMethodId
       ? await this.shippingRatesService.quoteForCheckout(
-          dto.shippingMethodId,
+          shippingMethodId,
           dto.shippingAddress,
           cart.totals.subtotal,
           cart.currency,
@@ -333,7 +344,7 @@ export class OrdersService {
     const shippingDiscountTotal = new Prisma.Decimal(shippingQuote?.discount ?? 0);
     const grandTotal = new Prisma.Decimal(cart.totals.grandTotal).plus(shippingQuote?.total ?? 0);
     const orderId = randomUUID();
-    const orderNumber = this.createOrderNumber(orderId);
+    const orderNumber = this.createOrderNumber(orderId, settings.orderPrefix);
     const reservationEnds = new Date(
       Math.min(cart.expiresAt.getTime(), Date.now() + this.reservationLifetimeMs),
     );
@@ -636,9 +647,9 @@ export class OrdersService {
     }
   }
 
-  private createOrderNumber(orderId: string): string {
+  private createOrderNumber(orderId: string, prefix: string): string {
     const date = new Date().toISOString().slice(0, 10).replaceAll('-', '');
-    return `ORD-${date}-${orderId.replaceAll('-', '').slice(0, 10).toUpperCase()}`;
+    return `${prefix}-${date}-${orderId.replaceAll('-', '').slice(0, 10).toUpperCase()}`;
   }
 
   private serializeOrder(order: OrderRecord, includeInternalNotes: boolean) {

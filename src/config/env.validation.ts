@@ -15,8 +15,6 @@ const environmentSchema = z
     PAYMENT_WEBHOOK_SECRET: z.string().min(16).optional(),
     API_PREFIX: z.string().min(1).default('api'),
     API_VERSION: z.string().min(1).default('1'),
-    SHOP_NAME: z.string().min(1).default('Example Store'),
-    CURRENCY: z.string().min(3).default('IRR'),
     MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
     MEDIA_LOCAL_ROOT: z.string().min(1).default('storage/media'),
     MEDIA_PUBLIC_BASE_URL: z.string().min(1).default('/media'),

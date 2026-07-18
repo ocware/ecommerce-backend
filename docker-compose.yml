@@ -12,8 +12,6 @@ services:
       PAYMENT_WEBHOOK_SECRET: local-payment-webhook-secret
       API_PREFIX: api
       API_VERSION: 1
-      SHOP_NAME: Example Store
-      CURRENCY: IRR
       MEDIA_STORAGE_DRIVER: local
       MEDIA_LOCAL_ROOT: /app/storage/media
       MEDIA_PUBLIC_BASE_URL: /media
@@ -40,8 +38,6 @@ services:
       PAYMENT_WEBHOOK_SECRET: local-payment-webhook-secret
       API_PREFIX: api
       API_VERSION: 1
-      SHOP_NAME: Example Store
-      CURRENCY: IRR
       MEDIA_STORAGE_DRIVER: local
       MEDIA_LOCAL_ROOT: /app/storage/media
       MEDIA_PUBLIC_BASE_URL: /media

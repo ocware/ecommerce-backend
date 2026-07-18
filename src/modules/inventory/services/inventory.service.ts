@@ -8,6 +8,7 @@ import { InventoryMovementType, InventoryReservationStatus, Prisma } from '@pris
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
+import { SettingsService } from '../../settings/services/settings.service';
 import {
   calculateAvailableStock,
   isLowStock,
@@ -36,10 +37,13 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly catalogService: CatalogService,
     private readonly eventPublisher: InventoryEventPublisher,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async initializeInventory(dto: InitializeInventoryDto, staffUserId?: string) {
     const variant = await this.catalogService.getVariantReference(dto.variantId);
+    const lowStockThreshold =
+      dto.lowStockThreshold ?? (await this.settingsService.get()).lowStockThreshold;
 
     try {
       const item = await this.prisma.$transaction(async (transaction) => {
@@ -47,7 +51,7 @@ export class InventoryService {
           data: {
             variantId: dto.variantId,
             currentStock: dto.currentStock,
-            lowStockThreshold: dto.lowStockThreshold,
+            lowStockThreshold,
           },
         });
         await transaction.inventoryMovement.create({

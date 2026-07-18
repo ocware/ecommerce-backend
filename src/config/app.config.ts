@@ -9,8 +9,6 @@ export const appConfig = registerAs('app', () => ({
   redisUrl: process.env.REDIS_URL,
   jwtSecret: process.env.JWT_SECRET,
   paymentWebhookSecret: process.env.PAYMENT_WEBHOOK_SECRET ?? process.env.JWT_SECRET,
-  shopName: process.env.SHOP_NAME ?? 'Example Store',
-  currency: process.env.CURRENCY ?? 'IRR',
   mediaStorageDriver: process.env.MEDIA_STORAGE_DRIVER ?? 'local',
   mediaLocalRoot: process.env.MEDIA_LOCAL_ROOT ?? 'storage/media',
   mediaPublicBaseUrl: process.env.MEDIA_PUBLIC_BASE_URL ?? '/media',

@@ -115,6 +115,16 @@ export class ShippingRatesService {
     return methods.map((method) => this.serializeMethod(method));
   }
 
+  async getMethodReference(id: string) {
+    const method = await this.requireMethod(id);
+    return {
+      id: method.id,
+      code: method.code,
+      currency: method.currency,
+      isActive: method.isActive,
+    };
+  }
+
   async createZone(dto: CreateShippingZoneDto) {
     return this.prisma.shippingZone.create({
       data: {

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsUUID, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class InitializeInventoryDto {
   @ApiProperty({ format: 'uuid' })
@@ -11,8 +11,9 @@ export class InitializeInventoryDto {
   @Min(0)
   currentStock!: number;
 
-  @ApiProperty({ minimum: 0, default: 0 })
+  @ApiPropertyOptional({ minimum: 0, description: 'Defaults to the shop setting.' })
+  @IsOptional()
   @IsInt()
   @Min(0)
-  lowStockThreshold!: number;
+  lowStockThreshold?: number;
 }

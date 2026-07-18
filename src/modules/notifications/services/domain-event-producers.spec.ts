@@ -13,6 +13,7 @@ import { CustomerTokenService } from '../../customers/services/customer-token.se
 import { CustomersService } from '../../customers/services/customers.service';
 import { InventoryEventPublisher } from '../../inventory/services/inventory-event-publisher.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
+import { SettingsService } from '../../settings/services/settings.service';
 
 describe('notification domain event producers', () => {
   it('publishes PasswordResetRequested only after a reset token is stored', async () => {
@@ -131,16 +132,17 @@ describe('notification domain event producers', () => {
       getVariantReference: jest.fn(() => ({ id: item.variantId, name: 'Variant', sku: 'SKU-1' })),
     };
     const events = { publish: jest.fn() };
+    const settings = { get: jest.fn(() => Promise.resolve({ lowStockThreshold: 2 })) };
     const service = new InventoryService(
       prisma as unknown as PrismaService,
       catalog as unknown as CatalogService,
       events as unknown as InventoryEventPublisher,
+      settings as unknown as SettingsService,
     );
 
     await service.initializeInventory({
       variantId: item.variantId,
       currentStock: item.currentStock,
-      lowStockThreshold: item.lowStockThreshold,
     });
 
     expect(events.publish).toHaveBeenCalledWith({

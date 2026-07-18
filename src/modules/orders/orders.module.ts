@@ -6,6 +6,7 @@ import { CustomersModule } from '../customers/customers.module';
 import { DiscountsModule } from '../discounts/discounts.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { ShippingRatesModule } from '../shipping/shipping-rates.module';
+import { SettingsModule } from '../settings/settings.module';
 import { AdminOrdersController } from './controllers/admin-orders.controller';
 import { StoreCheckoutController } from './controllers/store-checkout.controller';
 import { StoreOrdersController } from './controllers/store-orders.controller';
@@ -20,6 +21,7 @@ import { OrdersService } from './services/orders.service';
     DiscountsModule,
     InventoryModule,
     ShippingRatesModule,
+    SettingsModule,
   ],
   controllers: [StoreCheckoutController, StoreOrdersController, AdminOrdersController],
   providers: [OrdersService, OrderEventPublisher],

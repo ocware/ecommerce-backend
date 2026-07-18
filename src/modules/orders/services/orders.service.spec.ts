@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import {
   DiscountType,
   OrderFulfillmentStatus,
@@ -13,6 +13,7 @@ import { CartService, CheckoutCartView } from '../../cart/services/cart.service'
 import { DiscountsService } from '../../discounts/services/discounts.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import { ShippingRatesService } from '../../shipping/services/shipping-rates.service';
+import { SettingsService } from '../../settings/services/settings.service';
 import { OrderEventPublisher } from './order-event-publisher.service';
 import { OrdersService } from './orders.service';
 
@@ -115,6 +116,15 @@ describe('OrdersService checkout orchestration', () => {
   };
   const eventPublisher = { publish: jest.fn() };
   const shippingRatesService = { quoteForCheckout: jest.fn() };
+  const settingsService = {
+    get: jest.fn(() =>
+      Promise.resolve({
+        orderPrefix: 'ORD',
+        defaultShippingMethodId: null as string | null,
+        guestCheckoutEnabled: true,
+      }),
+    ),
+  };
   const service = new OrdersService(
     prisma as unknown as PrismaService,
     cartService as unknown as CartService,
@@ -122,6 +132,7 @@ describe('OrdersService checkout orchestration', () => {
     discountsService as unknown as DiscountsService,
     eventPublisher as unknown as OrderEventPublisher,
     shippingRatesService as unknown as ShippingRatesService,
+    settingsService as unknown as SettingsService,
   );
 
   beforeEach(() => {
@@ -179,6 +190,79 @@ describe('OrdersService checkout orchestration', () => {
       expect.objectContaining({ name: 'OrderCreated', orderId: result.id }),
     );
     expect(result.totals.grandTotal).toBe('40.00');
+  });
+
+  it('uses the configured order prefix', async () => {
+    settingsService.get.mockResolvedValueOnce({
+      orderPrefix: 'SHOP',
+      defaultShippingMethodId: null,
+      guestCheckoutEnabled: true,
+    });
+
+    await service.checkoutCustomer(checkoutDto, customer);
+
+    expect(prisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          orderNumber: expect.stringMatching(/^SHOP-/) as string,
+        }) as Record<string, unknown>,
+      }),
+    );
+  });
+
+  it('blocks guest checkout when the database setting is disabled', async () => {
+    settingsService.get.mockResolvedValueOnce({
+      orderPrefix: 'ORD',
+      defaultShippingMethodId: null,
+      guestCheckoutEnabled: false,
+    });
+
+    await expect(
+      service.checkoutGuest(
+        {
+          ...checkoutDto,
+          customer: { name: 'Guest', email: 'guest@example.test' },
+        },
+        'guest-token',
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(cartService.prepareCheckout).not.toHaveBeenCalled();
+  });
+
+  it('uses the configured default shipping method when checkout omits one', async () => {
+    const defaultShippingMethodId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    settingsService.get.mockResolvedValueOnce({
+      orderPrefix: 'ORD',
+      defaultShippingMethodId,
+      guestCheckoutEnabled: true,
+    });
+    shippingRatesService.quoteForCheckout.mockResolvedValueOnce({
+      methodId: defaultShippingMethodId,
+      code: 'standard',
+      name: 'Standard delivery',
+      type: 'STANDARD',
+      provider: 'LOCAL',
+      currency: 'USD',
+      price: '5.00',
+      discount: '0.00',
+      total: '5.00',
+      freeShipping: false,
+      estimatedDeliveryAt: new Date(Date.now() + 86_400_000),
+      estimatedMinDays: 2,
+      estimatedMaxDays: 4,
+      pickupInstructions: null,
+      pickupAddress: null,
+    });
+
+    await service.checkoutCustomer(checkoutDto, customer);
+
+    expect(shippingRatesService.quoteForCheckout).toHaveBeenCalledWith(
+      defaultShippingMethodId,
+      checkoutDto.shippingAddress,
+      cart.totals.subtotal,
+      cart.currency,
+      cart.freeShipping,
+    );
   });
 
   it('adds a verified shipping quote to the immutable order pricing snapshot', async () => {

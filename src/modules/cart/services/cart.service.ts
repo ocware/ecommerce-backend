@@ -17,6 +17,7 @@ import {
   DiscountEvaluator,
 } from '../../discounts/contracts/discount-evaluator';
 import { InventoryService } from '../../inventory/services/inventory.service';
+import { SettingsService } from '../../settings/services/settings.service';
 import { AuthenticatedCustomer } from '../../customers/types/authenticated-customer';
 import { AddCartItemDto } from '../dto/add-cart-item.dto';
 import { ApplyDiscountCodeDto } from '../dto/apply-discount-code.dto';
@@ -72,13 +73,15 @@ export class CartService {
     private readonly tokenService: CartTokenService,
     @Inject(DISCOUNT_EVALUATOR)
     private readonly discountEvaluator: DiscountEvaluator,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async createGuestCart(dto: CreateCartDto) {
+    const currency = dto.currency ?? (await this.settingsService.get()).currency;
     const guestToken = this.tokenService.createGuestToken();
     const cart = await this.prisma.cart.create({
       data: {
-        currency: dto.currency,
+        currency,
         guestTokenHash: guestToken.tokenHash,
         expiresAt: this.expirationFromNow(this.guestLifetimeMs),
       },
@@ -87,10 +90,11 @@ export class CartService {
   }
 
   async createCustomerCart(dto: CreateCartDto, customer: AuthenticatedCustomer) {
+    const currency = dto.currency ?? (await this.settingsService.get()).currency;
     const existing = await this.prisma.cart.findFirst({
       where: {
         customerId: customer.id,
-        currency: dto.currency,
+        currency,
         status: CartStatus.ACTIVE,
       },
       orderBy: { createdAt: 'desc' },
@@ -109,7 +113,7 @@ export class CartService {
       const cart = await this.prisma.cart.create({
         data: {
           customerId: customer.id,
-          currency: dto.currency,
+          currency,
           expiresAt: this.expirationFromNow(this.customerLifetimeMs),
         },
       });
@@ -119,7 +123,7 @@ export class CartService {
         const concurrent = await this.prisma.cart.findFirst({
           where: {
             customerId: customer.id,
-            currency: dto.currency,
+            currency,
             status: CartStatus.ACTIVE,
           },
         });
@@ -508,8 +512,12 @@ export class CartService {
         message: 'The discount evaluator returned an invalid total.',
       });
     }
+    const settings = await this.settingsService.get();
     const shippingTotal = new Prisma.Decimal(0);
-    const taxTotal = new Prisma.Decimal(0);
+    const taxableTotal = subtotal.minus(discountTotal);
+    const taxTotal = settings.taxEnabled
+      ? taxableTotal.mul(settings.taxRate).div(100).toDecimalPlaces(2)
+      : new Prisma.Decimal(0);
     const grandTotal = subtotal.minus(discountTotal).plus(shippingTotal).plus(taxTotal);
 
     return {

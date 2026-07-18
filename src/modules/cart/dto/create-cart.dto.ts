@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Matches } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, Matches } from 'class-validator';
 
 export class CreateCartDto {
-  @ApiProperty({ example: 'USD' })
+  @ApiPropertyOptional({ example: 'USD', description: 'Defaults to the shop currency.' })
+  @IsOptional()
   @Matches(/^[A-Z]{3}$/)
-  currency!: string;
+  currency?: string;
 }

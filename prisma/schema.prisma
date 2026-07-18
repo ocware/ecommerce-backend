@@ -998,6 +998,25 @@ model Notification {
   @@index([readAt, createdAt])
 }
 
+model ShopSettings {
+  id                      String   @id @default("default")
+  shopName                String
+  currency                String   @db.VarChar(3)
+  taxEnabled              Boolean  @default(false)
+  taxRate                 Decimal  @default(0) @db.Decimal(7, 4)
+  defaultShippingMethodId String?  @db.Uuid
+  orderPrefix             String   @default("ORD") @db.VarChar(12)
+  lowStockThreshold       Int      @default(0)
+  guestCheckoutEnabled    Boolean  @default(true)
+  version                 Int      @default(0)
+  updatedByStaffUserId    String?  @db.Uuid
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([defaultShippingMethodId])
+  @@index([updatedByStaffUserId])
+}
+
 model ProductAttribute {
   id        String   @id @default(uuid()) @db.Uuid
   productId String   @db.Uuid
