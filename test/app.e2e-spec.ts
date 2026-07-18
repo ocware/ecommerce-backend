@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 
 import { HttpExceptionFilter } from '../src/shared/errors/http-exception.filter';
+import { OpenAPIObject, setupOpenApi } from '../src/shared/openapi/openapi';
 import { ResponseEnvelopeInterceptor } from '../src/shared/response/response-envelope.interceptor';
 
 describe('App', () => {
@@ -23,10 +24,12 @@ describe('App', () => {
     app = moduleRef.createNestApplication();
     const configService = app.get(ConfigService);
 
-    app.setGlobalPrefix(configService.getOrThrow<string>('app.apiPrefix'));
+    const apiPrefix = configService.getOrThrow<string>('app.apiPrefix');
+    const apiVersion = configService.getOrThrow<string>('app.apiVersion');
+    app.setGlobalPrefix(apiPrefix);
     app.enableVersioning({
       type: VersioningType.URI,
-      defaultVersion: configService.getOrThrow<string>('app.apiVersion'),
+      defaultVersion: apiVersion,
     });
     app.useGlobalPipes(
       new ValidationPipe({
@@ -37,6 +40,7 @@ describe('App', () => {
     );
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+    setupOpenApi(app, apiPrefix, apiVersion);
 
     await app.init();
   });
@@ -59,6 +63,30 @@ describe('App', () => {
           },
           meta: {},
           errors: [],
+        });
+      });
+  });
+
+  it('publishes the complete machine-readable OpenAPI contract', async () => {
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .get('/api/openapi.json')
+      .expect(200)
+      .expect(({ body }) => {
+        const openApiDocument = body as unknown as OpenAPIObject;
+        expect(openApiDocument.info).toMatchObject({
+          title: 'E-commerce Backend API',
+          version: '1',
+        });
+        expect(openApiDocument.paths['/api/v1/admin/auth/login'].post?.summary).toBe(
+          'Sign in a staff member',
+        );
+        expect(openApiDocument.paths['/api/v1/store/products'].get?.responses['200']).toBeDefined();
+        expect(openApiDocument.components?.schemas?.ApiErrorResponse).toBeDefined();
+        expect(openApiDocument.components?.securitySchemes?.bearer).toMatchObject({
+          type: 'http',
+          scheme: 'bearer',
         });
       });
   });

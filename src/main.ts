@@ -2,12 +2,12 @@ import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { isAbsolute, resolve } from 'node:path';
 
 import { AppModule } from './app/app.module';
 import { HttpExceptionFilter } from './shared/errors/http-exception.filter';
 import { RequestLoggingInterceptor } from './shared/logging/request-logging.interceptor';
+import { setupOpenApi } from './shared/openapi/openapi';
 import { ResponseEnvelopeInterceptor } from './shared/response/response-envelope.interceptor';
 
 async function bootstrap() {
@@ -39,14 +39,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new RequestLoggingInterceptor(), new ResponseEnvelopeInterceptor());
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('E-commerce Backend API')
-    .setDescription('NestJS modular monolith e-commerce backend')
-    .setVersion(apiVersion)
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+  setupOpenApi(app, apiPrefix, apiVersion);
 
   const port = configService.getOrThrow<number>('app.port');
   await app.listen(port);

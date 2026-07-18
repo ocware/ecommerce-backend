@@ -12,7 +12,8 @@ docker compose up --build
 ```
 
 The API is available at `http://localhost:3000/api/v1`, Swagger at
-`http://localhost:3000/api/docs`, and the health endpoint at
+`http://localhost:3000/api/docs`, the machine-readable OpenAPI contract at
+`http://localhost:3000/api/openapi.json` (or `/api/openapi.yaml`), and the health endpoint at
 `http://localhost:3000/api/health`.
 
 Without Docker, install dependencies and provide PostgreSQL and Redis URLs before running:

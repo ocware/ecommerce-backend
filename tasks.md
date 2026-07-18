@@ -18,7 +18,7 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 - [x] Add request logging.
 - [x] Add health check endpoint.
 - [x] Add API versioning under `/api/v1`.
-- [x] Add OpenAPI documentation.
+- [x] Add detailed OpenAPI documentation, machine-readable exports, and contract coverage.
 - [x] Add base test setup for unit and integration tests.
 
 ## Phase 2: Auth And Administration
