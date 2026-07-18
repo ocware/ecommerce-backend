@@ -9,6 +9,21 @@ export const appConfig = registerAs('app', () => ({
   redisUrl: process.env.REDIS_URL,
   jwtSecret: process.env.JWT_SECRET,
   paymentWebhookSecret: process.env.PAYMENT_WEBHOOK_SECRET ?? process.env.JWT_SECRET,
+  paymentGateways: (
+    process.env.PAYMENT_GATEWAYS ?? 'DEVELOPMENT,MANUAL_BANK_TRANSFER,CASH_ON_DELIVERY'
+  )
+    .split(',')
+    .map((value) => value.trim()),
+  shippingProviders: (process.env.SHIPPING_PROVIDERS ?? 'LOCAL')
+    .split(',')
+    .map((value) => value.trim()),
+  emailProvider: process.env.EMAIL_PROVIDER ?? 'development',
+  smsProvider: process.env.SMS_PROVIDER ?? 'development',
+  features: {
+    media: process.env.FEATURE_MEDIA_ENABLED !== 'false',
+    notifications: process.env.FEATURE_NOTIFICATIONS_ENABLED !== 'false',
+    reports: process.env.FEATURE_REPORTS_ENABLED !== 'false',
+  },
   mediaStorageDriver: process.env.MEDIA_STORAGE_DRIVER ?? 'local',
   mediaLocalRoot: process.env.MEDIA_LOCAL_ROOT ?? 'storage/media',
   mediaPublicBaseUrl: process.env.MEDIA_PUBLIC_BASE_URL ?? '/media',

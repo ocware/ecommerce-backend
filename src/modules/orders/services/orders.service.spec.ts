@@ -109,6 +109,7 @@ describe('OrdersService checkout orchestration', () => {
   const inventoryService = {
     reserveStock: jest.fn(),
     releaseReservation: jest.fn(),
+    confirmReservations: jest.fn(),
   };
   const discountsService = {
     recordRedemptions: jest.fn(),
@@ -142,6 +143,7 @@ describe('OrdersService checkout orchestration', () => {
     cartService.markConverted.mockResolvedValue(undefined);
     inventoryService.reserveStock.mockResolvedValue({ id: reservationId });
     inventoryService.releaseReservation.mockResolvedValue({ status: 'RELEASED' });
+    inventoryService.confirmReservations.mockResolvedValue([]);
     discountsService.recordRedemptions.mockResolvedValue({ recorded: 1 });
     discountsService.releaseRedemptions.mockResolvedValue(undefined);
     prisma.order.create.mockResolvedValue(makeOrder());
@@ -362,6 +364,26 @@ describe('OrdersService checkout orchestration', () => {
       expect.objectContaining({ name: 'OrderCancelled', reason: 'Changed my mind' }),
     );
     expect(result.status).toBe(OrderStatus.CANCELLED);
+  });
+
+  it('confirms every reservation before marking a paid order as confirmed', async () => {
+    const pending = makeOrder();
+    const paid = makeOrder({
+      status: OrderStatus.CONFIRMED,
+      paymentStatus: OrderPaymentStatus.PAID,
+    });
+    prisma.order.findUnique.mockResolvedValueOnce(pending);
+    prisma.order.update.mockResolvedValueOnce(paid);
+
+    const result = await service.markPaymentSucceeded(pending.id);
+
+    expect(inventoryService.confirmReservations).toHaveBeenCalledWith([reservationId]);
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: OrderStatus.CONFIRMED, paymentStatus: OrderPaymentStatus.PAID },
+      }),
+    );
+    expect(result.paymentStatus).toBe(OrderPaymentStatus.PAID);
   });
 
   it('returns processing orders to confirmed when all active shipments are removed', async () => {

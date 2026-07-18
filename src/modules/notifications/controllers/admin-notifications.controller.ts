@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+import { OptionalFeature } from '../../../shared/features/feature-toggle';
+import { RequireFeature } from '../../../shared/features/require-feature.decorator';
 import { CurrentStaff } from '../../auth/decorators/current-staff.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
@@ -21,6 +23,7 @@ import { NotificationDeliveryService } from '../services/notification-delivery.s
 
 @ApiTags('admin notifications')
 @ApiBearerAuth()
+@RequireFeature(OptionalFeature.NOTIFICATIONS)
 @UseGuards(StaffAuthGuard, PermissionsGuard)
 @Controller({ path: 'admin/notifications', version: '1' })
 export class AdminNotificationsController {

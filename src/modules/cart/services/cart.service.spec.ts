@@ -159,6 +159,45 @@ describe('CartService', () => {
     expect(prisma.cartItem.upsert).not.toHaveBeenCalled();
   });
 
+  it('rejects a product that becomes unavailable before it is added to the cart', async () => {
+    const prisma = {
+      cart: { findUnique: jest.fn(() => cart) },
+      cartItem: { findUnique: jest.fn(() => null), upsert: jest.fn() },
+    };
+    const catalog = {
+      getCartVariant: jest.fn(() => ({
+        ...cartVariant,
+        product: { ...cartVariant.product, status: ProductStatus.ARCHIVED },
+      })),
+    };
+    const inventory = {
+      getAvailability: jest.fn(() => ({
+        variantId,
+        availableStock: 10,
+        inStock: true,
+        lowStock: false,
+      })),
+    };
+    const service = new CartService(
+      prisma as unknown as PrismaService,
+      catalog as unknown as CatalogService,
+      inventory as unknown as InventoryService,
+      tokenService,
+      { evaluate: jest.fn() },
+      settings as unknown as SettingsService,
+    );
+
+    await expect(
+      service.addGuestItem(cartId, { variantId, quantity: 1 }, guest.token),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_NOT_AVAILABLE' }) as Record<
+        string,
+        unknown
+      >,
+    });
+    expect(prisma.cartItem.upsert).not.toHaveBeenCalled();
+  });
+
   it('marks expired carts before rejecting access', async () => {
     const expiredCart = { ...cart, expiresAt: new Date(Date.now() - 1) };
     const prisma = {

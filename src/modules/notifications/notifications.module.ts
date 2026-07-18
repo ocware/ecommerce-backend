@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
@@ -27,8 +28,24 @@ import { NotificationEventListener } from './services/notification-event-listene
   providers: [
     DevelopmentEmailProvider,
     DevelopmentSmsProvider,
-    { provide: EMAIL_PROVIDER, useExisting: DevelopmentEmailProvider },
-    { provide: SMS_PROVIDER, useExisting: DevelopmentSmsProvider },
+    {
+      provide: EMAIL_PROVIDER,
+      inject: [ConfigService, DevelopmentEmailProvider],
+      useFactory: (config: ConfigService, development: DevelopmentEmailProvider) => {
+        const provider = config.get<string>('app.emailProvider', 'development');
+        if (provider === 'development') return development;
+        throw new Error(`Unsupported email provider: ${provider}`);
+      },
+    },
+    {
+      provide: SMS_PROVIDER,
+      inject: [ConfigService, DevelopmentSmsProvider],
+      useFactory: (config: ConfigService, development: DevelopmentSmsProvider) => {
+        const provider = config.get<string>('app.smsProvider', 'development');
+        if (provider === 'development') return development;
+        throw new Error(`Unsupported SMS provider: ${provider}`);
+      },
+    },
     NotificationDeliveryService,
     NotificationEventListener,
   ],

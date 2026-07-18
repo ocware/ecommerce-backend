@@ -5,6 +5,15 @@ const booleanEnvironmentValue = z.preprocess(
   z.boolean(),
 );
 
+const csvAllowlist = (allowedValues: readonly string[], name: string) =>
+  z
+    .string()
+    .min(1)
+    .refine((value) => {
+      const entries = value.split(',').map((entry) => entry.trim());
+      return entries.length > 0 && entries.every((entry) => allowedValues.includes(entry));
+    }, `${name} contains an unsupported provider`);
+
 const environmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -13,6 +22,13 @@ const environmentSchema = z
     REDIS_URL: z.string().url(),
     JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters long'),
     PAYMENT_WEBHOOK_SECRET: z.string().min(16).optional(),
+    PAYMENT_GATEWAYS: csvAllowlist(
+      ['DEVELOPMENT', 'MANUAL_BANK_TRANSFER', 'CASH_ON_DELIVERY'],
+      'PAYMENT_GATEWAYS',
+    ).default('DEVELOPMENT,MANUAL_BANK_TRANSFER,CASH_ON_DELIVERY'),
+    SHIPPING_PROVIDERS: csvAllowlist(['LOCAL'], 'SHIPPING_PROVIDERS').default('LOCAL'),
+    EMAIL_PROVIDER: z.enum(['development']).default('development'),
+    SMS_PROVIDER: z.enum(['development']).default('development'),
     API_PREFIX: z.string().min(1).default('api'),
     API_VERSION: z.string().min(1).default('1'),
     MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
@@ -31,6 +47,9 @@ const environmentSchema = z
     MEDIA_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
     MEDIA_S3_PUBLIC_BASE_URL: z.string().url().optional(),
     MEDIA_S3_FORCE_PATH_STYLE: booleanEnvironmentValue.default(false),
+    FEATURE_MEDIA_ENABLED: booleanEnvironmentValue.default(true),
+    FEATURE_NOTIFICATIONS_ENABLED: booleanEnvironmentValue.default(true),
+    FEATURE_REPORTS_ENABLED: booleanEnvironmentValue.default(true),
   })
   .superRefine((config, context) => {
     if (config.MEDIA_STORAGE_DRIVER !== 's3') return;

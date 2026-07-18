@@ -116,7 +116,12 @@ describe('Catalog API', () => {
       .post('/api/v1/admin/products')
       .set('Authorization', 'Bearer token')
       .send({ name: 'Classic T-Shirt', slug: 'Classic T Shirt' })
-      .expect(400);
+      .expect(400)
+      .expect(({ body }: { body: { errors: Array<{ code: string; details: unknown }> } }) => {
+        expect(body.errors[0].code).toBe('VALIDATION_ERROR');
+        const details = body.errors[0].details as { fields: Array<{ field: string }> };
+        expect(details.fields.some((field) => field.field === 'slug')).toBe(true);
+      });
 
     expect(catalogService.createProduct).not.toHaveBeenCalled();
   });

@@ -2,6 +2,7 @@ services:
   api:
     build:
       context: .
+      target: development
     command: npm run start:dev
     environment:
       NODE_ENV: development
@@ -29,6 +30,7 @@ services:
   worker:
     build:
       context: .
+      target: development
     command: npm run start:worker:dev
     environment:
       NODE_ENV: development

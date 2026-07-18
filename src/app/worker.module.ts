@@ -8,6 +8,7 @@ import { JobHandlersModule } from '../infrastructure/background/job-handlers.mod
 import { DatabaseModule } from '../infrastructure/database/database.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { EventsModule } from '../shared/events/events.module';
+import { FeaturesModule } from '../shared/features/features.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { EventsModule } from '../shared/events/events.module';
     DatabaseModule,
     RedisModule,
     EventsModule,
+    FeaturesModule,
     BackgroundQueueModule,
     JobHandlersModule,
   ],

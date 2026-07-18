@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_PIPE } from '@nestjs/core';
 
 import { appConfig } from '../config/app.config';
 import { validateEnvironment } from '../config/env.validation';
@@ -21,6 +22,8 @@ import { SettingsModule } from '../modules/settings/settings.module';
 import { ShippingModule } from '../modules/shipping/shipping.module';
 import { UsersModule } from '../modules/users/users.module';
 import { EventsModule } from '../shared/events/events.module';
+import { FeaturesModule } from '../shared/features/features.module';
+import { createAppValidationPipe } from '../shared/validation/app-validation.pipe';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -34,6 +37,7 @@ import { HealthController } from './health.controller';
     RedisModule,
     BackgroundQueueModule,
     EventsModule,
+    FeaturesModule,
     AuthModule,
     UsersModule,
     CustomersModule,
@@ -50,5 +54,6 @@ import { HealthController } from './health.controller';
     ReportsModule,
   ],
   controllers: [HealthController],
+  providers: [{ provide: APP_PIPE, useFactory: createAppValidationPipe }],
 })
 export class AppModule {}

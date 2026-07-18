@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { ShippingProvider, ShippingProviderName } from '../contracts/shipping-provider';
 import { LocalShippingProvider } from '../providers/local-shipping.provider';
@@ -7,8 +8,18 @@ import { LocalShippingProvider } from '../providers/local-shipping.provider';
 export class ShippingProviderRegistry {
   private readonly providers: Map<ShippingProviderName, ShippingProvider>;
 
-  constructor(localProvider: LocalShippingProvider) {
-    this.providers = new Map([[localProvider.name, localProvider]]);
+  constructor(config: ConfigService, localProvider: LocalShippingProvider) {
+    const enabled = new Set(
+      config.get<ShippingProviderName[]>(
+        'app.shippingProviders',
+        Object.values(ShippingProviderName),
+      ),
+    );
+    this.providers = new Map(
+      [localProvider]
+        .filter((provider) => enabled.has(provider.name))
+        .map((provider) => [provider.name, provider]),
+    );
   }
 
   get(name: string): ShippingProvider {

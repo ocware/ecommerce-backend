@@ -3,6 +3,8 @@ import { Subscription } from 'rxjs';
 
 import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
 import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
+import { OptionalFeature } from '../../../shared/features/feature-toggle';
+import { FeatureToggleService } from '../../../shared/features/feature-toggle.service';
 import { AuthDomainEvent } from '../../auth/domain/auth-events';
 import { AuthEventPublisher } from '../../auth/services/auth-event-publisher.service';
 import { CustomerDomainEvent } from '../../customers/domain/customer-events';
@@ -33,9 +35,14 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
     private readonly authEvents: AuthEventPublisher,
     private readonly customerEvents: CustomerEventPublisher,
     private readonly inventoryEvents: InventoryEventPublisher,
+    private readonly features: FeatureToggleService,
   ) {}
 
   onModuleInit(): void {
+    if (!this.features.isEnabled(OptionalFeature.NOTIFICATIONS)) {
+      this.logger.log('Notification feature disabled; event subscriptions were not started.');
+      return;
+    }
     this.subscribe(this.orderEvents, (event) => this.handleOrder(event));
     this.subscribe(this.paymentEvents, (event) => this.handlePayment(event));
     this.subscribe(this.shipmentEvents, (event) => this.handleShipment(event));

@@ -6,6 +6,7 @@ import {
   ShippingMethodType,
   Prisma,
 } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { OrdersService, ShippingOrderView } from '../../orders/services/orders.service';
@@ -138,7 +139,10 @@ describe('ShippingService shipment lifecycle', () => {
     getShippingOrderForAdmin: jest.fn(() => Promise.resolve(order)),
     updateFulfillmentStatus: jest.fn(() => Promise.resolve(order)),
   };
-  const providerRegistry = new ShippingProviderRegistry(new LocalShippingProvider());
+  const providerRegistry = new ShippingProviderRegistry(
+    { get: (_key: string, fallback: unknown) => fallback } as unknown as ConfigService,
+    new LocalShippingProvider(),
+  );
   const eventPublisher = { publish: jest.fn() };
   const service = new ShippingService(
     prisma as unknown as PrismaService,

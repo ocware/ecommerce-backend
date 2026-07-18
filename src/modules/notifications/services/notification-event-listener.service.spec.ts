@@ -1,6 +1,7 @@
 import { AuthEventPublisher } from '../../auth/services/auth-event-publisher.service';
 import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
 import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
+import { FeatureToggleService } from '../../../shared/features/feature-toggle.service';
 import { CustomerEventPublisher } from '../../customers/services/customer-event-publisher.service';
 import { InventoryEventPublisher } from '../../inventory/services/inventory-event-publisher.service';
 import { OrdersService } from '../../orders/services/orders.service';
@@ -47,6 +48,7 @@ describe('NotificationEventListener', () => {
     authEvents,
     customerEvents,
     inventoryEvents,
+    { isEnabled: () => true } as unknown as FeatureToggleService,
   );
 
   beforeAll(() => listener.onModuleInit());

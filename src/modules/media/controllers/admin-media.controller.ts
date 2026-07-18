@@ -16,6 +16,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
+import { OptionalFeature } from '../../../shared/features/feature-toggle';
+import { RequireFeature } from '../../../shared/features/require-feature.decorator';
 import { CurrentStaff } from '../../auth/decorators/current-staff.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
@@ -34,6 +36,7 @@ const uploadOptions = { limits: { files: 1, fileSize: 10 * 1024 * 1024 } };
 
 @ApiTags('admin media')
 @ApiBearerAuth()
+@RequireFeature(OptionalFeature.MEDIA)
 @UseGuards(StaffAuthGuard, PermissionsGuard)
 @Controller({ path: 'admin/media', version: '1' })
 export class AdminMediaController {

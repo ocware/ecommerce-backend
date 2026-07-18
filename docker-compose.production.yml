@@ -1,0 +1,140 @@
+x-app: &app
+  env_file:
+    - .env.production
+  restart: unless-stopped
+  init: true
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp
+  networks:
+    - backend
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '5'
+
+services:
+  migrate:
+    build:
+      context: .
+      target: migration
+    image: ${APP_IMAGE_REPOSITORY:-ecommerce-backend}-migration:${IMAGE_TAG:-latest}
+    env_file:
+      - .env.production
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    build:
+      context: .
+      target: api
+    image: ${APP_IMAGE_REPOSITORY:-ecommerce-backend}-api:${IMAGE_TAG:-latest}
+    ports:
+      - '${APP_BIND_ADDRESS:-127.0.0.1}:${PORT:-3000}:3000'
+    volumes:
+      - media-data:/app/storage/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    <<: *app
+    build:
+      context: .
+      target: worker
+    image: ${APP_IMAGE_REPOSITORY:-ecommerce-backend}-worker:${IMAGE_TAG:-latest}
+    volumes:
+      - media-data:/app/storage/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  seed:
+    build:
+      context: .
+      target: migration
+    image: ${APP_IMAGE_REPOSITORY:-ecommerce-backend}-migration:${IMAGE_TAG:-latest}
+    command: npm run prisma:seed
+    env_file:
+      - .env.production
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    networks:
+      - backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles:
+      - tools
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env.production}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env.production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.production}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.production}
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+
+networks:
+  backend:
+
+volumes:
+  postgres-data:
+  redis-data:
+  media-data:

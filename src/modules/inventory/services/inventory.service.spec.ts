@@ -193,4 +193,66 @@ describe('InventoryService reservation lifecycle', () => {
     ]);
     expect(transaction.inventoryMovement.create).toHaveBeenCalledTimes(2);
   });
+
+  it('restores sold stock idempotently after a cancellation or return', async () => {
+    const now = new Date();
+    const item = {
+      id: 'inventory-id',
+      variantId: '66666666-6666-4666-8666-666666666666',
+      currentStock: 8,
+      reservedStock: 0,
+      lowStockThreshold: 1,
+      version: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const createMovement = jest.fn(() => ({ id: 'restoration-movement-id' }));
+    const transaction = {
+      inventoryItem: {
+        findUnique: jest.fn(() => item),
+        findUniqueOrThrow: jest.fn(() => item),
+        updateMany: jest.fn(
+          (input: {
+            where: { version: number };
+            data: { currentStock: number; reservedStock: number; version: { increment: number } };
+          }) => {
+            if (input.where.version !== item.version) return { count: 0 };
+            item.currentStock = input.data.currentStock;
+            item.reservedStock = input.data.reservedStock;
+            item.version += input.data.version.increment;
+            return { count: 1 };
+          },
+        ),
+      },
+      inventoryMovement: { create: createMovement },
+    };
+    const prisma = {
+      inventoryMovement: { findUnique: jest.fn(() => null) },
+      $transaction: jest.fn((operation: (client: typeof transaction) => Promise<unknown>) =>
+        operation(transaction),
+      ),
+    };
+    const service = new InventoryService(
+      prisma as unknown as PrismaService,
+      {} as CatalogService,
+      { publish: jest.fn() } as unknown as InventoryEventPublisher,
+      {} as SettingsService,
+    );
+
+    const result = await service.restoreStock(
+      item.variantId,
+      { quantity: 2, reference: 'cancelled-order-line-1', reason: 'Order returned.' },
+      'staff-id',
+    );
+
+    expect(result.currentStock).toBe(10);
+    expect(createMovement).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: InventoryMovementType.RESTORED,
+        currentStockDelta: 2,
+        resultingCurrentStock: 10,
+        idempotencyKey: 'inventory-restore:cancelled-order-line-1',
+      }) as Record<string, unknown>,
+    });
+  });
 });

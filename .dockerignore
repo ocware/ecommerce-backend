@@ -2,5 +2,14 @@ node_modules
 dist
 coverage
 .git
-.env
+.gitignore
+.env*
+!.env.example
+!.env.production.example
+.eslintcache
+.npmrc
+.DS_Store
+.idea
+.vscode
 *.log
+storage

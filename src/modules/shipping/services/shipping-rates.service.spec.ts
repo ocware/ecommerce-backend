@@ -1,4 +1,5 @@
 import { ShippingMethodType, Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { ShippingProviderName } from '../contracts/shipping-provider';
@@ -57,7 +58,10 @@ describe('ShippingRatesService', () => {
       findUnique: jest.fn(() => method),
     },
   };
-  const registry = new ShippingProviderRegistry(new LocalShippingProvider());
+  const registry = new ShippingProviderRegistry(
+    { get: (_key: string, fallback: unknown) => fallback } as unknown as ConfigService,
+    new LocalShippingProvider(),
+  );
   const service = new ShippingRatesService(prisma as unknown as PrismaService, registry);
   const address = {
     fullName: 'Customer',

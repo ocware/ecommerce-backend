@@ -2,6 +2,8 @@ import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nest
 import { Job, Worker } from 'bullmq';
 import Redis from 'ioredis';
 
+import { OptionalFeature } from '../../shared/features/feature-toggle';
+import { FeatureToggleService } from '../../shared/features/feature-toggle.service';
 import { REDIS_CLIENT } from '../redis/redis.constants';
 import { BackgroundJobQueue } from './background-job-queue.service';
 import {
@@ -35,6 +37,7 @@ export class BackgroundJobProcessor implements OnModuleInit, OnModuleDestroy {
     private readonly expiredReservationRelease: ExpiredReservationReleaseJob,
     private readonly shipmentTrackingUpdate: ShipmentTrackingUpdateJob,
     private readonly reportGeneration: ReportGenerationJob,
+    private readonly features: FeatureToggleService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -61,6 +64,12 @@ export class BackgroundJobProcessor implements OnModuleInit, OnModuleDestroy {
   }
 
   private process(job: Job<BackgroundJobData, unknown, BackgroundJobName>): Promise<unknown> {
+    const requiredFeature = this.requiredFeature(job.name);
+    if (requiredFeature && !this.features.isEnabled(requiredFeature)) {
+      this.logger.log(`Skipped ${job.name} because ${requiredFeature} is disabled.`);
+      return Promise.resolve({ skipped: true, feature: requiredFeature });
+    }
+
     switch (job.name) {
       case BackgroundJobName.EMAIL_DELIVERY:
         return this.emailDelivery.handle(
@@ -96,6 +105,20 @@ export class BackgroundJobProcessor implements OnModuleInit, OnModuleDestroy {
         );
       default:
         return Promise.reject(new Error(`Unsupported background job: ${String(job.name)}`));
+    }
+  }
+
+  private requiredFeature(jobName: BackgroundJobName): OptionalFeature | undefined {
+    switch (jobName) {
+      case BackgroundJobName.EMAIL_DELIVERY:
+      case BackgroundJobName.SMS_DELIVERY:
+        return OptionalFeature.NOTIFICATIONS;
+      case BackgroundJobName.IMAGE_PROCESSING:
+        return OptionalFeature.MEDIA;
+      case BackgroundJobName.REPORT_GENERATION:
+        return OptionalFeature.REPORTS;
+      default:
+        return undefined;
     }
   }
 }

@@ -1,6 +1,8 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+import { OptionalFeature } from '../../../shared/features/feature-toggle';
+import { RequireFeature } from '../../../shared/features/require-feature.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
 import { StaffAuthGuard } from '../../auth/guards/staff-auth.guard';
@@ -12,6 +14,7 @@ import { ReportsService } from '../services/reports.service';
 
 @ApiTags('admin reports')
 @ApiBearerAuth()
+@RequireFeature(OptionalFeature.REPORTS)
 @UseGuards(StaffAuthGuard, PermissionsGuard)
 @RequirePermissions(Permission.ViewReports)
 @Controller({ path: 'admin/reports', version: '1' })

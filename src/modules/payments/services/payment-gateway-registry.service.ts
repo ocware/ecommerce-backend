@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { PaymentGateway, PaymentGatewayName } from '../contracts/payment-gateway';
 import { CashOnDeliveryGateway } from '../gateways/cash-on-delivery.gateway';
@@ -10,12 +11,18 @@ export class PaymentGatewayRegistry {
   private readonly gateways: Map<PaymentGatewayName, PaymentGateway>;
 
   constructor(
+    config: ConfigService,
     development: DevelopmentPaymentGateway,
     manualBankTransfer: ManualBankTransferGateway,
     cashOnDelivery: CashOnDeliveryGateway,
   ) {
+    const enabled = new Set(
+      config.get<PaymentGatewayName[]>('app.paymentGateways', Object.values(PaymentGatewayName)),
+    );
     this.gateways = new Map(
-      [development, manualBankTransfer, cashOnDelivery].map((gateway) => [gateway.name, gateway]),
+      [development, manualBankTransfer, cashOnDelivery]
+        .filter((gateway) => enabled.has(gateway.name))
+        .map((gateway) => [gateway.name, gateway]),
     );
   }
 

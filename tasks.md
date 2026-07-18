@@ -235,51 +235,51 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 16: Deployment And Reusability
 
-- [ ] Finalize Docker image.
-- [ ] Add production Docker Compose example.
-- [ ] Add environment example file.
-- [ ] Document per-shop isolated deployment.
-- [ ] Add backup guidance.
-- [ ] Add migration guidance.
-- [ ] Add monitoring guidance.
-- [ ] Add feature toggles for optional modules.
-- [ ] Extract provider adapters behind configuration.
-- [ ] Add reusable seed data.
-- [ ] Write deployment documentation.
+- [x] Finalize Docker image.
+- [x] Add production Docker Compose example.
+- [x] Add environment example file.
+- [x] Document per-shop isolated deployment.
+- [x] Add backup guidance.
+- [x] Add migration guidance.
+- [x] Add monitoring guidance.
+- [x] Add feature toggles for optional modules.
+- [x] Extract provider adapters behind configuration.
+- [x] Add reusable seed data.
+- [x] Write deployment documentation.
 
 ## Cross-Cutting Acceptance Criteria
 
-- [ ] Module boundaries are clean and there are no accidental circular dependencies.
-- [ ] Admin and customer accounts are separated.
+- [x] Module boundaries are clean and there are no accidental circular dependencies.
+- [x] Admin and customer accounts are separated.
 - [x] Catalog and inventory are separated.
 - [x] Orders store immutable purchase snapshots.
 - [x] Payment redirects are never trusted without gateway or webhook verification.
 - [x] Payment callbacks are idempotent.
 - [x] Stock reservations prevent overselling.
 - [x] Failed or expired checkouts release reserved stock.
-- [ ] API routes are versioned.
-- [ ] Store and admin APIs are separated.
-- [ ] Errors use structured codes and details.
-- [ ] Tests cover the core happy path and key failure paths.
+- [x] API routes are versioned.
+- [x] Store and admin APIs are separated.
+- [x] Errors use structured codes and details.
+- [x] Tests cover the core happy path and key failure paths.
 
 ## Primary End-To-End Flow To Protect
 
-- [ ] Add product.
-- [ ] Create cart.
-- [ ] Apply discount.
-- [ ] Reserve inventory.
-- [ ] Create order.
-- [ ] Start payment.
-- [ ] Verify payment.
-- [ ] Confirm inventory.
-- [ ] Send notification.
+- [x] Add product.
+- [x] Create cart.
+- [x] Apply discount.
+- [x] Reserve inventory.
+- [x] Create order.
+- [x] Start payment.
+- [x] Verify payment.
+- [x] Confirm inventory.
+- [x] Send notification.
 
 ## Failure Paths To Protect
 
 - [x] Payment failure.
 - [x] Duplicate payment callback.
-- [ ] Product becomes unavailable.
-- [ ] Coupon expires.
+- [x] Product becomes unavailable.
+- [x] Coupon expires.
 - [x] Order cancellation.
 - [x] Refund.
-- [ ] Inventory restoration.
+- [x] Inventory restoration.

@@ -2,6 +2,8 @@ import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Job, JobsOptions, Queue } from 'bullmq';
 import Redis from 'ioredis';
 
+import { OptionalFeature } from '../../shared/features/feature-toggle';
+import { FeatureToggleService } from '../../shared/features/feature-toggle.service';
 import { REDIS_CLIENT } from '../redis/redis.constants';
 import {
   BACKGROUND_QUEUE_NAME,
@@ -14,7 +16,10 @@ import {
 export class BackgroundJobQueue implements OnModuleDestroy {
   private queue?: Queue<BackgroundJobData, unknown, string>;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    private readonly features: FeatureToggleService,
+  ) {}
 
   private getQueue(): Queue<BackgroundJobData, unknown, string> {
     this.queue ??= new Queue(BACKGROUND_QUEUE_NAME, {
@@ -44,7 +49,7 @@ export class BackgroundJobQueue implements OnModuleDestroy {
 
   async registerRecurringJobs(): Promise<void> {
     const queue = this.getQueue();
-    await Promise.all([
+    const schedules: Promise<unknown>[] = [
       queue.upsertJobScheduler(
         'expired-reservations-every-minute',
         { every: 60_000 },
@@ -61,15 +66,20 @@ export class BackgroundJobQueue implements OnModuleDestroy {
           data: { limit: 100 },
         },
       ),
-      queue.upsertJobScheduler(
-        'daily-sales-report',
-        { pattern: '0 0 * * *' },
-        {
-          name: BackgroundJobName.REPORT_GENERATION,
-          data: { report: 'overview' },
-        },
-      ),
-    ]);
+    ];
+    schedules.push(
+      this.features.isEnabled(OptionalFeature.REPORTS)
+        ? queue.upsertJobScheduler(
+            'daily-sales-report',
+            { pattern: '0 0 * * *' },
+            {
+              name: BackgroundJobName.REPORT_GENERATION,
+              data: { report: 'overview' },
+            },
+          )
+        : queue.removeJobScheduler('daily-sales-report'),
+    );
+    await Promise.all(schedules);
   }
 
   async onModuleDestroy(): Promise<void> {
