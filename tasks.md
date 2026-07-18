@@ -117,23 +117,23 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 8: Checkout And Orders
 
-- [ ] Create `orders` module.
-- [ ] Implement checkout orchestration.
-- [ ] Create orders from cart.
-- [ ] Store immutable order item snapshots.
-- [ ] Store customer details snapshot.
-- [ ] Store billing address snapshot.
-- [ ] Store shipping address snapshot.
-- [ ] Store pricing snapshot.
-- [ ] Keep order status separate from payment, fulfillment, and refund statuses.
-- [ ] Implement internal notes.
-- [ ] Implement customer notes.
-- [ ] Implement cancellation.
-- [ ] Implement order history.
-- [ ] Implement invoice information.
-- [ ] Publish `OrderCreated`.
-- [ ] Publish `OrderCancelled`.
-- [ ] Add checkout integration tests.
+- [x] Create `orders` module.
+- [x] Implement checkout orchestration.
+- [x] Create orders from cart.
+- [x] Store immutable order item snapshots.
+- [x] Store customer details snapshot.
+- [x] Store billing address snapshot.
+- [x] Store shipping address snapshot.
+- [x] Store pricing snapshot.
+- [x] Keep order status separate from payment, fulfillment, and refund statuses.
+- [x] Implement internal notes.
+- [x] Implement customer notes.
+- [x] Implement cancellation.
+- [x] Implement order history.
+- [x] Implement invoice information.
+- [x] Publish `OrderCreated`.
+- [x] Publish `OrderCancelled`.
+- [x] Add checkout integration tests.
 
 ## Phase 9: Payments
 
@@ -252,11 +252,11 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 - [ ] Module boundaries are clean and there are no accidental circular dependencies.
 - [ ] Admin and customer accounts are separated.
 - [x] Catalog and inventory are separated.
-- [ ] Orders store immutable purchase snapshots.
+- [x] Orders store immutable purchase snapshots.
 - [ ] Payment redirects are never trusted without gateway or webhook verification.
 - [ ] Payment callbacks are idempotent.
 - [x] Stock reservations prevent overselling.
-- [ ] Failed or expired checkouts release reserved stock.
+- [x] Failed or expired checkouts release reserved stock.
 - [ ] API routes are versioned.
 - [ ] Store and admin APIs are separated.
 - [ ] Errors use structured codes and details.
@@ -280,6 +280,6 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 - [ ] Duplicate payment callback.
 - [ ] Product becomes unavailable.
 - [ ] Coupon expires.
-- [ ] Order cancellation.
+- [x] Order cancellation.
 - [ ] Refund.
 - [ ] Inventory restoration.

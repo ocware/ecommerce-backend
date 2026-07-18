@@ -1,0 +1,23 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+
+export class CheckoutCustomerDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(200)
+  name!: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(320)
+  email?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(50)
+  phone?: string;
+}

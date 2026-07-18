@@ -27,6 +27,39 @@ import { CartTokenService } from './cart-token.service';
 
 type CartVariant = Awaited<ReturnType<CatalogService['getCartVariant']>>;
 
+export type CheckoutCartView = {
+  id: string;
+  customerId: string | null;
+  currency: string;
+  discountCode: string | null;
+  expiresAt: Date;
+  items: Array<{
+    id: string;
+    variantId: string;
+    quantity: number;
+    product: { id: string; name: string; slug: string; categoryIds: string[] };
+    variant: { name: string; sku: string };
+    image: string | null;
+    unitPrice: string;
+    lineSubtotal: string;
+  }>;
+  discounts: Array<{
+    discountId: string;
+    code: string;
+    label: string;
+    type: import('@prisma/client').DiscountType;
+    amount: string;
+  }>;
+  freeShipping: boolean;
+  totals: {
+    subtotal: string;
+    discountTotal: string;
+    shippingTotal: string;
+    taxTotal: string;
+    grandTotal: string;
+  };
+};
+
 @Injectable()
 export class CartService {
   private readonly guestLifetimeMs = 7 * 24 * 60 * 60 * 1000;
@@ -106,6 +139,82 @@ export class CartService {
     const cart = await this.requireActiveCart(id);
     this.assertCustomerAccess(cart, customer.id);
     return this.calculateCart(cart);
+  }
+
+  async prepareCheckout(
+    id: string,
+    access: { customerId: string } | { guestToken?: string },
+  ): Promise<CheckoutCartView> {
+    const cart = await this.requireActiveCart(id);
+    if ('customerId' in access) {
+      this.assertCustomerAccess(cart, access.customerId);
+    } else {
+      this.assertGuestAccess(cart, access.guestToken);
+    }
+    const calculated = await this.calculateCart(cart);
+    if (!calculated.canCheckout) {
+      throw new ConflictException({
+        code: 'CART_NOT_READY_FOR_CHECKOUT',
+        message: 'The cart cannot be checked out in its current state.',
+        details: {
+          cartId: cart.id,
+          itemIssues: calculated.items
+            .filter((item) => !item.isAvailable)
+            .map((item) => ({ variantId: item.variantId, issues: item.issues })),
+        },
+      });
+    }
+
+    return {
+      id: calculated.id,
+      customerId: calculated.customerId,
+      currency: calculated.currency,
+      discountCode: calculated.discountCode,
+      expiresAt: calculated.expiresAt,
+      items: calculated.items.map((item) => ({
+        id: item.id,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        product: item.product,
+        variant: item.variant,
+        image: item.image,
+        unitPrice: item.unitPrice,
+        lineSubtotal: item.lineSubtotal!,
+      })),
+      discounts: calculated.discounts,
+      freeShipping: calculated.freeShipping,
+      totals: calculated.totals,
+    };
+  }
+
+  async verifyCheckoutAccess(
+    id: string,
+    access: { customerId: string } | { guestToken?: string },
+  ): Promise<void> {
+    const cart = await this.prisma.cart.findUnique({ where: { id } });
+    if (!cart) {
+      throw new NotFoundException({ code: 'CART_NOT_FOUND', message: 'Cart was not found.' });
+    }
+    if ('customerId' in access) {
+      this.assertCustomerAccess(cart, access.customerId);
+    } else {
+      this.assertGuestAccess(cart, access.guestToken);
+    }
+  }
+
+  async markConverted(id: string): Promise<void> {
+    const result = await this.prisma.cart.updateMany({
+      where: { id, status: CartStatus.ACTIVE },
+      data: { status: CartStatus.CONVERTED },
+    });
+    if (result.count === 1) return;
+
+    const cart = await this.prisma.cart.findUnique({ where: { id }, select: { status: true } });
+    if (cart?.status === CartStatus.CONVERTED) return;
+    throw new ConflictException({
+      code: 'CART_CONVERSION_FAILED',
+      message: 'The cart could not be converted to an order.',
+    });
   }
 
   async addGuestItem(id: string, dto: AddCartItemDto, guestToken?: string) {

@@ -332,6 +332,27 @@ export class DiscountsService implements DiscountEvaluator {
     return { recorded: uniqueApplications.length };
   }
 
+  async releaseRedemptions(orderReference: string): Promise<void> {
+    await this.prisma.$transaction(
+      async (transaction) => {
+        const redemptions = await transaction.discountRedemption.findMany({
+          where: { orderReference },
+          select: { id: true, discountId: true },
+        });
+        if (!redemptions.length) return;
+
+        await transaction.discountRedemption.deleteMany({ where: { orderReference } });
+        for (const redemption of redemptions) {
+          await transaction.discount.update({
+            where: { id: redemption.discountId },
+            data: { usageCount: { decrement: 1 } },
+          });
+        }
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
   private async getEligibleItems(
     rule: DiscountRule,
     context: DiscountEvaluationContext,

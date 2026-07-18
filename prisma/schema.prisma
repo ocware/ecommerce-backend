@@ -92,6 +92,39 @@ enum DiscountType {
   FREE_SHIPPING
 }
 
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderPaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum OrderFulfillmentStatus {
+  UNFULFILLED
+  PROCESSING
+  PARTIALLY_FULFILLED
+  FULFILLED
+  CANCELLED
+}
+
+enum OrderRefundStatus {
+  NONE
+  PENDING
+  PARTIAL
+  FULL
+  FAILED
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -106,6 +139,7 @@ model StaffUser {
   sessions            StaffSession[]
   passwordResetTokens PasswordResetToken[]
   auditLogs           AuditLog[]
+  orderInternalNotes  OrderInternalNote[]
 
   @@index([role])
   @@index([status])
@@ -179,6 +213,7 @@ model Customer {
   carts                Cart[]
   discountRestrictions DiscountCustomer[]
   discountRedemptions  DiscountRedemption[]
+  orders               Order[]
 
   @@index([status])
   @@index([phone])
@@ -455,6 +490,84 @@ model DiscountRedemption {
   @@unique([discountId, orderReference])
   @@index([customerId, discountId])
   @@index([orderReference])
+}
+
+model Order {
+  id                       String                 @id @default(uuid()) @db.Uuid
+  orderNumber              String                 @unique
+  cartId                   String                 @unique @db.Uuid
+  customerId               String?                @db.Uuid
+  status                   OrderStatus            @default(PENDING)
+  paymentStatus            OrderPaymentStatus     @default(PENDING)
+  fulfillmentStatus        OrderFulfillmentStatus @default(UNFULFILLED)
+  refundStatus             OrderRefundStatus      @default(NONE)
+  currency                 String                 @db.VarChar(3)
+  subtotal                 Decimal                @db.Decimal(18, 2)
+  discountTotal            Decimal                @default(0) @db.Decimal(18, 2)
+  shippingTotal            Decimal                @default(0) @db.Decimal(18, 2)
+  shippingDiscountTotal    Decimal                @default(0) @db.Decimal(18, 2)
+  taxTotal                 Decimal                @default(0) @db.Decimal(18, 2)
+  grandTotal               Decimal                @db.Decimal(18, 2)
+  customerSnapshot         Json
+  billingAddressSnapshot   Json
+  shippingAddressSnapshot  Json
+  pricingSnapshot          Json
+  invoiceInformation       Json?
+  customerNote             String?
+  cancellationReason       String?
+  cancelledAt              DateTime?
+  cancelledByStaffUserId   String?                @db.Uuid
+  inventoryReservationEnds DateTime
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+
+  customer      Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  internalNotes OrderInternalNote[]
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@index([paymentStatus, createdAt])
+  @@index([fulfillmentStatus, createdAt])
+}
+
+model OrderItem {
+  id                     String   @id @default(uuid()) @db.Uuid
+  orderId                String   @db.Uuid
+  variantId              String   @db.Uuid
+  inventoryReservationId String   @unique @db.Uuid
+  productName            String
+  productSlug            String
+  variantName            String
+  sku                    String
+  imageUrl               String?
+  unitPrice              Decimal  @db.Decimal(18, 2)
+  quantity               Int
+  lineSubtotal           Decimal  @db.Decimal(18, 2)
+  lineDiscount           Decimal  @default(0) @db.Decimal(18, 2)
+  lineTax                Decimal  @default(0) @db.Decimal(18, 2)
+  lineTotal              Decimal  @db.Decimal(18, 2)
+  createdAt              DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([variantId])
+  @@index([sku])
+}
+
+model OrderInternalNote {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @db.Uuid
+  staffUserId String   @db.Uuid
+  note        String
+  createdAt   DateTime @default(now())
+
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  staffUser StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@index([staffUserId])
 }
 
 model InventoryItem {
