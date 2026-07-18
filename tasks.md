@@ -209,15 +209,15 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 14: Reports
 
-- [ ] Create `reports` module.
-- [ ] Implement sales by date.
-- [ ] Implement order count.
-- [ ] Implement average order value.
-- [ ] Implement best-selling products.
-- [ ] Implement low-stock products.
-- [ ] Implement payment status summary.
-- [ ] Implement refund summary.
-- [ ] Keep reports read-oriented unless explicitly required otherwise.
+- [x] Create `reports` module.
+- [x] Implement sales by date.
+- [x] Implement order count.
+- [x] Implement average order value.
+- [x] Implement best-selling products.
+- [x] Implement low-stock products.
+- [x] Implement payment status summary.
+- [x] Implement refund summary.
+- [x] Keep reports read-oriented unless explicitly required otherwise.
 
 ## Phase 15: Background Jobs And Events
 
