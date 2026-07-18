@@ -175,17 +175,17 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 11: Media
 
-- [ ] Create `media` module.
-- [ ] Define `FileStorage` interface.
-- [ ] Implement product images.
-- [ ] Implement category images.
-- [ ] Implement shop logo.
-- [ ] Implement banners.
-- [ ] Add upload validation.
-- [ ] Add image resizing job.
-- [ ] Add image deletion.
-- [ ] Add local storage adapter.
-- [ ] Add object storage adapter.
+- [x] Create `media` module.
+- [x] Define `FileStorage` interface.
+- [x] Implement product images.
+- [x] Implement category images.
+- [x] Implement shop logo.
+- [x] Implement banners.
+- [x] Add upload validation.
+- [x] Add image resizing job.
+- [x] Add image deletion.
+- [x] Add local storage adapter.
+- [x] Add object storage adapter.
 
 ## Phase 12: Notifications
 

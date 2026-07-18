@@ -413,9 +413,21 @@ export class CatalogService {
   }
 
   async createImage(productId: string, dto: CreateProductImageDto) {
+    return this.createManagedImage(productId, dto);
+  }
+
+  async createManagedImage(
+    productId: string,
+    image: {
+      url: string;
+      altText?: string;
+      variantId?: string;
+      position?: number;
+    },
+  ) {
     await this.requireProduct(productId);
-    if (dto.variantId) {
-      const variant = await this.requireVariant(dto.variantId);
+    if (image.variantId) {
+      const variant = await this.requireVariant(image.variantId);
       if (variant.productId !== productId) {
         throw new BadRequestException({
           code: 'INVALID_IMAGE_VARIANT',
@@ -424,7 +436,26 @@ export class CatalogService {
       }
     }
 
-    return this.prisma.productImage.create({ data: { productId, ...dto } });
+    return this.prisma.productImage.create({ data: { productId, ...image } });
+  }
+
+  async deleteManagedImage(imageId: string): Promise<void> {
+    await this.prisma.productImage.deleteMany({ where: { id: imageId } });
+  }
+
+  async setManagedCategoryImage(categoryId: string, imageUrl: string) {
+    await this.requireCategory(categoryId);
+    return this.prisma.category.update({
+      where: { id: categoryId },
+      data: { imageUrl },
+    });
+  }
+
+  async clearManagedCategoryImage(categoryId: string, expectedImageUrl: string): Promise<void> {
+    await this.prisma.category.updateMany({
+      where: { id: categoryId, imageUrl: expectedImageUrl },
+      data: { imageUrl: null },
+    });
   }
 
   async upsertPrice(variantId: string, dto: UpsertProductPriceDto) {

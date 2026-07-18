@@ -175,6 +175,20 @@ enum ShipmentStatus {
   FAILED
 }
 
+enum MediaAssetType {
+  PRODUCT_IMAGE
+  CATEGORY_IMAGE
+  SHOP_LOGO
+  BANNER
+}
+
+enum MediaAssetStatus {
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -912,6 +926,38 @@ model ProductImage {
 
   @@index([productId, position])
   @@index([variantId])
+}
+
+model MediaAsset {
+  id                   String           @id @default(uuid()) @db.Uuid
+  type                 MediaAssetType
+  status               MediaAssetStatus @default(PROCESSING)
+  ownerId              String?          @db.Uuid
+  catalogImageId       String?          @unique @db.Uuid
+  storageProvider      String
+  originalKey          String           @unique
+  originalUrl          String
+  originalFilename     String
+  mimeType             String
+  sizeBytes            Int
+  width                Int?
+  height               Int?
+  variants             Json?
+  altText              String?
+  position             Int              @default(0)
+  linkUrl              String?
+  startsAt             DateTime?
+  endsAt               DateTime?
+  isActive             Boolean          @default(true)
+  processingError      String?
+  createdByStaffUserId String           @db.Uuid
+  deletedAt            DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([type, ownerId, status])
+  @@index([type, isActive, position])
+  @@index([createdByStaffUserId])
 }
 
 model ProductAttribute {

@@ -14,11 +14,16 @@ services:
       API_VERSION: 1
       SHOP_NAME: Example Store
       CURRENCY: IRR
+      MEDIA_STORAGE_DRIVER: local
+      MEDIA_LOCAL_ROOT: /app/storage/media
+      MEDIA_PUBLIC_BASE_URL: /media
+      MEDIA_MAX_UPLOAD_BYTES: 10485760
     ports:
       - '3000:3000'
     volumes:
       - .:/app
       - /app/node_modules
+      - media-data:/app/storage/media
     depends_on:
       - postgres
       - redis
@@ -37,9 +42,14 @@ services:
       API_VERSION: 1
       SHOP_NAME: Example Store
       CURRENCY: IRR
+      MEDIA_STORAGE_DRIVER: local
+      MEDIA_LOCAL_ROOT: /app/storage/media
+      MEDIA_PUBLIC_BASE_URL: /media
+      MEDIA_MAX_UPLOAD_BYTES: 10485760
     volumes:
       - .:/app
       - /app/node_modules
+      - media-data:/app/storage/media
     depends_on:
       - postgres
       - redis
@@ -62,3 +72,4 @@ services:
 
 volumes:
   postgres-data:
+  media-data:

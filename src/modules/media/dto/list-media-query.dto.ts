@@ -1,0 +1,29 @@
+import { MediaAssetStatus, MediaAssetType } from '@prisma/client';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+
+export class ListMediaQueryDto {
+  @ApiPropertyOptional({ enum: MediaAssetType })
+  @IsOptional()
+  @IsEnum(MediaAssetType)
+  type?: MediaAssetType;
+
+  @ApiPropertyOptional({ enum: MediaAssetStatus })
+  @IsOptional()
+  @IsEnum(MediaAssetStatus)
+  status?: MediaAssetStatus;
+
+  @ApiPropertyOptional({ minimum: 1, default: 1 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page = 1;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 20 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit = 20;
+}
