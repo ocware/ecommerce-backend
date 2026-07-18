@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
+import { InternalEventBus } from '../../../shared/events/internal-event-bus';
 import { AuthDomainEvent } from '../domain/auth-events';
 
 @Injectable()
 export class AuthEventPublisher {
-  private readonly events = new Subject<AuthDomainEvent>();
+  constructor(private readonly events: InternalEventBus = new InternalEventBus()) {}
 
   publish(event: AuthDomainEvent): void {
-    this.events.next(event);
+    this.events.publish(event);
   }
 
   stream(): Observable<AuthDomainEvent> {
-    return this.events.asObservable();
+    return this.events.stream<AuthDomainEvent>(['PasswordResetRequested']);
   }
 }

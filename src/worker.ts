@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
-import { AppModule } from './app/app.module';
+import { WorkerModule } from './app/worker.module';
 
 async function bootstrapWorker() {
   const logger = new Logger('Worker');
-  await NestFactory.createApplicationContext(AppModule, {
+  await NestFactory.createApplicationContext(WorkerModule, {
     bufferLogs: true,
   });
   logger.log('Worker context started');

@@ -1,4 +1,6 @@
 import { AuthEventPublisher } from '../../auth/services/auth-event-publisher.service';
+import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
+import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
 import { CustomerEventPublisher } from '../../customers/services/customer-event-publisher.service';
 import { InventoryEventPublisher } from '../../inventory/services/inventory-event-publisher.service';
 import { OrdersService } from '../../orders/services/orders.service';
@@ -28,6 +30,7 @@ describe('NotificationEventListener', () => {
     sendAdmin: jest.fn(() => Promise.resolve()),
   };
   const ordersService = { getNotificationOrder: jest.fn(() => Promise.resolve(order)) };
+  const backgroundJobs = { add: jest.fn(() => Promise.resolve({ id: 'job-id' })) };
   const orderEvents = new OrderEventPublisher();
   const paymentEvents = new PaymentEventPublisher();
   const shipmentEvents = new ShipmentEventPublisher();
@@ -36,6 +39,7 @@ describe('NotificationEventListener', () => {
   const inventoryEvents = new InventoryEventPublisher();
   const listener = new NotificationEventListener(
     notifications as unknown as NotificationDeliveryService,
+    backgroundJobs as unknown as BackgroundJobQueue,
     ordersService as unknown as OrdersService,
     orderEvents,
     paymentEvents,
@@ -77,13 +81,16 @@ describe('NotificationEventListener', () => {
     });
     await thisTurn();
 
-    expect(notifications.sendEmail).toHaveBeenCalledWith(
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.EMAIL_DELIVERY,
       expect.objectContaining({ eventName: 'OrderCreated' }),
     );
-    expect(notifications.sendEmail).toHaveBeenCalledWith(
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.EMAIL_DELIVERY,
       expect.objectContaining({ eventName: 'PaymentFailed' }),
     );
-    expect(notifications.sendEmail).toHaveBeenCalledWith(
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.EMAIL_DELIVERY,
       expect.objectContaining({ eventName: 'ShipmentCreated' }),
     );
   });
@@ -117,10 +124,12 @@ describe('NotificationEventListener', () => {
     });
     await thisTurn();
 
-    expect(notifications.sendEmail).toHaveBeenCalledWith(
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.EMAIL_DELIVERY,
       expect.objectContaining({ eventName: 'PasswordResetRequested' }),
     );
-    expect(notifications.sendSms).toHaveBeenCalledWith(
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.SMS_DELIVERY,
       expect.objectContaining({ eventName: 'CustomerRegistered' }),
     );
     expect(notifications.sendAdmin).toHaveBeenCalledWith(

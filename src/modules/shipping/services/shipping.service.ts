@@ -175,6 +175,25 @@ export class ShippingService {
     );
   }
 
+  async refreshShipmentTracking(limit = 100) {
+    const shipments = await this.prisma.shipment.findMany({
+      where: {
+        providerReference: { not: null },
+        status: {
+          in: [ShipmentStatus.CREATED, ShipmentStatus.IN_TRANSIT, ShipmentStatus.OUT_FOR_DELIVERY],
+        },
+      },
+      select: { id: true },
+      orderBy: { updatedAt: 'asc' },
+      take: limit,
+    });
+    const results = [];
+    for (const shipment of shipments) {
+      results.push(await this.trackShipment(shipment.id));
+    }
+    return { examined: shipments.length, shipments: results };
+  }
+
   async cancelShipment(id: string) {
     const shipment = await this.requireShipment(id);
     if (shipment.status === ShipmentStatus.CANCELLED) return this.serializeShipment(shipment);

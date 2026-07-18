@@ -9,6 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import { MediaAsset, MediaAssetStatus, MediaAssetType, Prisma } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
+import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
+import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
 import { FILE_STORAGE, FileStorage } from '../contracts/file-storage';
@@ -19,7 +21,7 @@ import { UploadBannerDto } from '../dto/upload-banner.dto';
 import { UploadCategoryImageDto } from '../dto/upload-category-image.dto';
 import { UploadProductImageDto } from '../dto/upload-product-image.dto';
 import { UploadShopLogoDto } from '../dto/upload-shop-logo.dto';
-import { ImageResizingJob, MediaVariants } from '../jobs/image-resizing.job';
+import { MediaVariants } from '../jobs/image-resizing.job';
 
 type UploadedImage = Express.Multer.File | undefined;
 
@@ -42,7 +44,7 @@ export class MediaService {
     private readonly prisma: PrismaService,
     private readonly catalogService: CatalogService,
     private readonly configService: ConfigService,
-    private readonly imageResizingJob: ImageResizingJob,
+    private readonly backgroundJobs: BackgroundJobQueue,
     @Inject(FILE_STORAGE) private readonly storage: FileStorage,
     @Inject(IMAGE_PROCESSOR) private readonly imageProcessor: ImageProcessor,
   ) {
@@ -278,7 +280,10 @@ export class MediaService {
       throw error;
     }
 
-    return this.imageResizingJob.handle(asset.id);
+    await this.backgroundJobs.add(BackgroundJobName.IMAGE_PROCESSING, {
+      mediaAssetId: asset.id,
+    });
+    return asset;
   }
 
   private requireFile(file: UploadedImage): Express.Multer.File {

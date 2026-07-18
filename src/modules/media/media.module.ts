@@ -34,6 +34,6 @@ import { MediaService } from './services/media.service';
     ImageResizingJob,
     MediaService,
   ],
-  exports: [MediaService, FILE_STORAGE],
+  exports: [MediaService, ImageResizingJob, FILE_STORAGE],
 })
 export class MediaModule {}

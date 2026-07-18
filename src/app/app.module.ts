@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { appConfig } from '../config/app.config';
 import { validateEnvironment } from '../config/env.validation';
 import { DatabaseModule } from '../infrastructure/database/database.module';
+import { BackgroundQueueModule } from '../infrastructure/background/background-queue.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CartModule } from '../modules/cart/cart.module';
@@ -19,6 +20,7 @@ import { ReportsModule } from '../modules/reports/reports.module';
 import { SettingsModule } from '../modules/settings/settings.module';
 import { ShippingModule } from '../modules/shipping/shipping.module';
 import { UsersModule } from '../modules/users/users.module';
+import { EventsModule } from '../shared/events/events.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -30,6 +32,8 @@ import { HealthController } from './health.controller';
     }),
     DatabaseModule,
     RedisModule,
+    BackgroundQueueModule,
+    EventsModule,
     AuthModule,
     UsersModule,
     CustomersModule,

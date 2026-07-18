@@ -2,11 +2,12 @@ import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MediaAsset, MediaAssetStatus, MediaAssetType } from '@prisma/client';
 
+import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
+import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
 import { FileStorage } from '../contracts/file-storage';
 import { ImageProcessor } from '../contracts/image-processor';
-import { ImageResizingJob } from '../jobs/image-resizing.job';
 import { MediaService } from './media.service';
 
 describe('MediaService', () => {
@@ -98,13 +99,13 @@ describe('MediaService', () => {
     inspect: jest.fn(() => ({ format: 'png', width: 1_600, height: 900 })),
     createVariants: jest.fn(),
   };
-  const resizingJob = { handle: jest.fn(() => readyAsset) };
+  const backgroundJobs = { add: jest.fn(() => ({ id: 'image-job' })) };
   const config = { get: jest.fn(() => 10 * 1024 * 1024) };
   const service = new MediaService(
     prisma as unknown as PrismaService,
     catalog as unknown as CatalogService,
     config as unknown as ConfigService,
-    resizingJob as unknown as ImageResizingJob,
+    backgroundJobs as unknown as BackgroundJobQueue,
     storage as unknown as FileStorage,
     processor as unknown as ImageProcessor,
   );
@@ -123,7 +124,7 @@ describe('MediaService', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('validates ownership, processes an upload, and publishes its medium URL to Catalog', async () => {
+  it('validates ownership, queues processing, and publishes the original URL to Catalog', async () => {
     const result = await service.uploadProductImage(
       productId,
       { variantId, altText: 'Product', position: 2 },
@@ -137,9 +138,11 @@ describe('MediaService', () => {
     expect(storage.upload).toHaveBeenCalledWith(
       expect.objectContaining({ contentType: 'image/png', body: file.buffer }),
     );
-    expect(resizingJob.handle).toHaveBeenCalledWith(assetId);
+    expect(backgroundJobs.add).toHaveBeenCalledWith(BackgroundJobName.IMAGE_PROCESSING, {
+      mediaAssetId: assetId,
+    });
     expect(catalog.createManagedImage).toHaveBeenCalledWith(productId, {
-      url: '/media/product-image/id/medium.webp',
+      url: '/media/product-image/id/original.png',
       altText: 'Product',
       position: 2,
       variantId,

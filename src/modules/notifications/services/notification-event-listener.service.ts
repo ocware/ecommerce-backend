@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Subscription } from 'rxjs';
 
+import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
+import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
 import { AuthDomainEvent } from '../../auth/domain/auth-events';
 import { AuthEventPublisher } from '../../auth/services/auth-event-publisher.service';
 import { CustomerDomainEvent } from '../../customers/domain/customer-events';
@@ -23,6 +25,7 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
 
   constructor(
     private readonly notifications: NotificationDeliveryService,
+    private readonly backgroundJobs: BackgroundJobQueue,
     private readonly ordersService: OrdersService,
     private readonly orderEvents: OrderEventPublisher,
     private readonly paymentEvents: PaymentEventPublisher,
@@ -63,6 +66,9 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
   private async handleOrder(event: OrderDomainEvent): Promise<void> {
     const order = await this.ordersService.getNotificationOrder(event.orderId);
     if (event.name === 'OrderCreated') {
+      await this.backgroundJobs.add(BackgroundJobName.INVOICE_GENERATION, {
+        orderId: event.orderId,
+      });
       await this.notifyCustomer(
         event.name,
         event.orderId,
@@ -148,7 +154,7 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
   }
 
   private async handleAuth(event: AuthDomainEvent): Promise<void> {
-    await this.notifications.sendEmail({
+    await this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
       eventName: event.name,
       eventId: event.passwordResetTokenId,
       recipient: event.email,
@@ -162,7 +168,7 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
   private async handleCustomer(event: CustomerDomainEvent): Promise<void> {
     const eventId = event.customerId;
     const deliveries: Promise<unknown>[] = [
-      this.notifications.sendEmail({
+      this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
         eventName: event.name,
         eventId,
         recipient: event.email,
@@ -180,7 +186,7 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
     ];
     if (event.phone) {
       deliveries.push(
-        this.notifications.sendSms({
+        this.backgroundJobs.add(BackgroundJobName.SMS_DELIVERY, {
           eventName: event.name,
           eventId,
           recipient: event.phone,
@@ -217,7 +223,7 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
     const deliveries: Promise<unknown>[] = [];
     if (order.customer.email) {
       deliveries.push(
-        this.notifications.sendEmail({
+        this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
           eventName,
           eventId,
           recipient: order.customer.email,
@@ -229,7 +235,7 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
     }
     if (order.customer.phone) {
       deliveries.push(
-        this.notifications.sendSms({
+        this.backgroundJobs.add(BackgroundJobName.SMS_DELIVERY, {
           eventName,
           eventId,
           recipient: order.customer.phone,

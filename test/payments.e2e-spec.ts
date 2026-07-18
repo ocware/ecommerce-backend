@@ -5,6 +5,8 @@ import { PaymentAttemptStatus, PaymentRefundStatus, StaffRole } from '@prisma/cl
 import request from 'supertest';
 
 import { StaffAuthGuard } from '../src/modules/auth/guards/staff-auth.guard';
+import { BackgroundJobQueue } from '../src/infrastructure/background/background-job-queue.service';
+import { BackgroundJobName } from '../src/infrastructure/background/background-job.types';
 import { CustomerAuthGuard } from '../src/modules/customers/guards/customer-auth.guard';
 import { PaymentGatewayName } from '../src/modules/payments/contracts/payment-gateway';
 import { PaymentsService } from '../src/modules/payments/services/payments.service';
@@ -35,6 +37,7 @@ describe('Payments API', () => {
     processWebhook: jest.fn(),
     createRefund: jest.fn(),
   };
+  const backgroundJobs = { add: jest.fn() };
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -47,6 +50,8 @@ describe('Payments API', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PaymentsService)
       .useValue(paymentsService)
+      .overrideProvider(BackgroundJobQueue)
+      .useValue(backgroundJobs)
       .overrideGuard(CustomerAuthGuard)
       .useValue({
         canActivate: (context: {
@@ -138,20 +143,20 @@ describe('Payments API', () => {
   });
 
   it('accepts gateway webhooks through a gateway-specific public endpoint', async () => {
-    paymentsService.processWebhook.mockResolvedValue({
-      id: attemptId,
-      status: PaymentAttemptStatus.SUCCEEDED,
-    });
+    backgroundJobs.add.mockResolvedValue({ id: 'callback-job', name: 'payment-callback' });
     const server = app.getHttpServer() as Parameters<typeof request>[0];
 
     await request(server)
       .post(`/api/v1/payments/webhooks/${PaymentGatewayName.DEVELOPMENT}`)
       .send({ eventId: 'gateway-event', signature: 'signed-payload' })
-      .expect(201);
+      .expect(202);
 
-    expect(paymentsService.processWebhook).toHaveBeenCalledWith(
-      PaymentGatewayName.DEVELOPMENT,
-      expect.objectContaining({ eventId: 'gateway-event' }),
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.PAYMENT_CALLBACK,
+      expect.objectContaining({
+        gateway: PaymentGatewayName.DEVELOPMENT,
+        payload: expect.objectContaining({ eventId: 'gateway-event' }) as Record<string, unknown>,
+      }),
     );
   });
 

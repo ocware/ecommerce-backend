@@ -221,17 +221,17 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 15: Background Jobs And Events
 
-- [ ] Add internal event bus.
-- [ ] Add Redis-backed queue.
-- [ ] Add worker process.
-- [ ] Add jobs for email.
-- [ ] Add jobs for SMS.
-- [ ] Add jobs for image processing.
-- [ ] Add jobs for invoice generation.
-- [ ] Add jobs for payment callback processing.
-- [ ] Add jobs for expired reservation release.
-- [ ] Add jobs for shipment tracking updates.
-- [ ] Add jobs for report generation.
+- [x] Add internal event bus.
+- [x] Add Redis-backed queue.
+- [x] Add worker process.
+- [x] Add jobs for email.
+- [x] Add jobs for SMS.
+- [x] Add jobs for image processing.
+- [x] Add jobs for invoice generation.
+- [x] Add jobs for payment callback processing.
+- [x] Add jobs for expired reservation release.
+- [x] Add jobs for shipment tracking updates.
+- [x] Add jobs for report generation.
 
 ## Phase 16: Deployment And Reusability
 

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 import { REDIS_CLIENT } from './redis.constants';
+import { RedisLifecycleService } from './redis-lifecycle.service';
 
 @Global()
 @Module({
@@ -18,6 +19,7 @@ import { REDIS_CLIENT } from './redis.constants';
         });
       },
     },
+    RedisLifecycleService,
   ],
   exports: [REDIS_CLIENT],
 })

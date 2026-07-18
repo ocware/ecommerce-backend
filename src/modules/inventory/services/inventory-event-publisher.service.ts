@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
+import { InternalEventBus } from '../../../shared/events/internal-event-bus';
 import { InventoryDomainEvent } from '../domain/inventory-events';
 
 @Injectable()
 export class InventoryEventPublisher {
-  private readonly events = new Subject<InventoryDomainEvent>();
+  constructor(private readonly events: InternalEventBus = new InternalEventBus()) {}
 
   publish(event: InventoryDomainEvent): void {
-    this.events.next(event);
+    this.events.publish(event);
   }
 
   stream(): Observable<InventoryDomainEvent> {
-    return this.events.asObservable();
+    return this.events.stream<InventoryDomainEvent>(['InventoryLow']);
   }
 }

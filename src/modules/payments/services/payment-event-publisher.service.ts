@@ -1,17 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
+import { InternalEventBus } from '../../../shared/events/internal-event-bus';
 import { PaymentDomainEvent } from '../domain/payment-events';
 
 @Injectable()
 export class PaymentEventPublisher {
-  private readonly events = new Subject<PaymentDomainEvent>();
+  constructor(private readonly events: InternalEventBus = new InternalEventBus()) {}
 
   publish(event: PaymentDomainEvent): void {
-    this.events.next(event);
+    this.events.publish(event);
   }
 
   stream(): Observable<PaymentDomainEvent> {
-    return this.events.asObservable();
+    return this.events.stream<PaymentDomainEvent>([
+      'PaymentStarted',
+      'PaymentSucceeded',
+      'PaymentFailed',
+      'RefundCompleted',
+    ]);
   }
 }

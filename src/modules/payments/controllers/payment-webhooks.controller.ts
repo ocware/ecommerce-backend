@@ -1,19 +1,21 @@
-import { Body, Controller, Param, ParseEnumPipe, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, ParseEnumPipe, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
+import { BackgroundJobName } from '../../../infrastructure/background/background-job.types';
 import { PaymentGatewayName } from '../contracts/payment-gateway';
-import { PaymentsService } from '../services/payments.service';
 
 @ApiTags('payment webhooks')
 @Controller({ path: 'payments/webhooks', version: '1' })
 export class PaymentWebhooksController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(private readonly backgroundJobs: BackgroundJobQueue) {}
 
   @Post(':gateway')
+  @HttpCode(HttpStatus.ACCEPTED)
   processWebhook(
     @Param('gateway', new ParseEnumPipe(PaymentGatewayName)) gateway: PaymentGatewayName,
     @Body() payload: Record<string, unknown>,
   ) {
-    return this.paymentsService.processWebhook(gateway, payload);
+    return this.backgroundJobs.add(BackgroundJobName.PAYMENT_CALLBACK, { gateway, payload });
   }
 }

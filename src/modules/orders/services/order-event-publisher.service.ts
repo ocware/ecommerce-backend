@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
+import { InternalEventBus } from '../../../shared/events/internal-event-bus';
 import { OrderDomainEvent } from '../domain/order-events';
 
 @Injectable()
 export class OrderEventPublisher {
-  private readonly events = new Subject<OrderDomainEvent>();
+  constructor(private readonly events: InternalEventBus = new InternalEventBus()) {}
 
   publish(event: OrderDomainEvent): void {
-    this.events.next(event);
+    this.events.publish(event);
   }
 
   stream(): Observable<OrderDomainEvent> {
-    return this.events.asObservable();
+    return this.events.stream<OrderDomainEvent>(['OrderCreated', 'OrderCancelled']);
   }
 }

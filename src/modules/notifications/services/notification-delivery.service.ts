@@ -6,7 +6,7 @@ import { EMAIL_PROVIDER, EmailProvider } from '../contracts/email-provider';
 import { SMS_PROVIDER, SmsProvider } from '../contracts/sms-provider';
 import { ListNotificationsQueryDto } from '../dto/list-notifications-query.dto';
 
-type NotificationInput = {
+export type NotificationInput = {
   eventName: string;
   eventId: string;
   recipient: string;
