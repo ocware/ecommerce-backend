@@ -319,6 +319,86 @@ export class InventoryService {
     return this.toReservationSummary(outcome.reservation);
   }
 
+  async confirmReservations(ids: string[]) {
+    const uniqueIds = [...new Set(ids)];
+    if (!uniqueIds.length) return [];
+
+    const reservations = await this.withOptimisticRetry(async (transaction) => {
+      const current = await transaction.inventoryReservation.findMany({
+        where: { id: { in: uniqueIds } },
+        include: { inventoryItem: true },
+      });
+      if (current.length !== uniqueIds.length) {
+        throw new NotFoundException({
+          code: 'INVENTORY_RESERVATION_NOT_FOUND',
+          message: 'One or more inventory reservations were not found.',
+        });
+      }
+      const expired = current.find(
+        (reservation) =>
+          reservation.status === InventoryReservationStatus.ACTIVE &&
+          reservation.expiresAt <= new Date(),
+      );
+      if (expired) {
+        throw new ConflictException({
+          code: 'RESERVATION_EXPIRED',
+          message: 'An inventory reservation expired before confirmation.',
+          details: { reservationId: expired.id },
+        });
+      }
+      const invalid = current.find(
+        (reservation) =>
+          reservation.status !== InventoryReservationStatus.ACTIVE &&
+          reservation.status !== InventoryReservationStatus.CONFIRMED,
+      );
+      if (invalid) {
+        throw new ConflictException({
+          code: 'RESERVATION_NOT_ACTIVE',
+          message: 'An inventory reservation is no longer active.',
+          details: { reservationId: invalid.id, status: invalid.status },
+        });
+      }
+
+      for (const reservation of current) {
+        if (reservation.status === InventoryReservationStatus.CONFIRMED) continue;
+        const item = reservation.inventoryItem;
+        const resultingState = {
+          currentStock: item.currentStock - reservation.quantity,
+          reservedStock: item.reservedStock - reservation.quantity,
+        };
+        if (!isValidStockState(resultingState)) {
+          throw new ConflictException({
+            code: 'INVALID_RESERVATION_CONFIRMATION',
+            message: 'Inventory state no longer supports this reservation.',
+          });
+        }
+        await this.updateStockState(transaction, item, resultingState);
+        await transaction.inventoryReservation.update({
+          where: { id: reservation.id },
+          data: { status: InventoryReservationStatus.CONFIRMED, confirmedAt: new Date() },
+        });
+        await transaction.inventoryMovement.create({
+          data: {
+            inventoryItemId: item.id,
+            reservationId: reservation.id,
+            type: InventoryMovementType.CONFIRMED,
+            currentStockDelta: -reservation.quantity,
+            reservedStockDelta: -reservation.quantity,
+            resultingCurrentStock: resultingState.currentStock,
+            resultingReservedStock: resultingState.reservedStock,
+            reason: 'Reserved stock confirmed as sold.',
+          },
+        });
+      }
+      return transaction.inventoryReservation.findMany({
+        where: { id: { in: uniqueIds } },
+        include: { inventoryItem: true },
+      });
+    });
+
+    return reservations.map((reservation) => this.toReservationSummary(reservation));
+  }
+
   async releaseReservation(id: string) {
     const reservation = await this.withOptimisticRetry(async (transaction) => {
       const current = await this.requireReservationInTransaction(transaction, id);

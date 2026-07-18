@@ -137,25 +137,25 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 9: Payments
 
-- [ ] Create `payments` module.
-- [ ] Define `PaymentGateway` interface.
-- [ ] Implement payment attempts.
-- [ ] Implement transactions.
-- [ ] Store gateway references.
-- [ ] Implement payment verification.
-- [ ] Implement webhook processing.
-- [ ] Implement failed payments.
-- [ ] Implement refunds.
-- [ ] Implement partial refunds.
-- [ ] Implement idempotency for callbacks and refunds.
-- [ ] Add first payment gateway adapter.
-- [ ] Add manual bank transfer adapter.
-- [ ] Add cash on delivery adapter.
-- [ ] Publish `PaymentStarted`.
-- [ ] Publish `PaymentSucceeded`.
-- [ ] Publish `PaymentFailed`.
-- [ ] Add payment verification integration tests.
-- [ ] Add duplicate callback tests.
+- [x] Create `payments` module.
+- [x] Define `PaymentGateway` interface.
+- [x] Implement payment attempts.
+- [x] Implement transactions.
+- [x] Store gateway references.
+- [x] Implement payment verification.
+- [x] Implement webhook processing.
+- [x] Implement failed payments.
+- [x] Implement refunds.
+- [x] Implement partial refunds.
+- [x] Implement idempotency for callbacks and refunds.
+- [x] Add first payment gateway adapter.
+- [x] Add manual bank transfer adapter.
+- [x] Add cash on delivery adapter.
+- [x] Publish `PaymentStarted`.
+- [x] Publish `PaymentSucceeded`.
+- [x] Publish `PaymentFailed`.
+- [x] Add payment verification integration tests.
+- [x] Add duplicate callback tests.
 
 ## Phase 10: Shipping
 
@@ -253,8 +253,8 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 - [ ] Admin and customer accounts are separated.
 - [x] Catalog and inventory are separated.
 - [x] Orders store immutable purchase snapshots.
-- [ ] Payment redirects are never trusted without gateway or webhook verification.
-- [ ] Payment callbacks are idempotent.
+- [x] Payment redirects are never trusted without gateway or webhook verification.
+- [x] Payment callbacks are idempotent.
 - [x] Stock reservations prevent overselling.
 - [x] Failed or expired checkouts release reserved stock.
 - [ ] API routes are versioned.
@@ -276,10 +276,10 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Failure Paths To Protect
 
-- [ ] Payment failure.
-- [ ] Duplicate payment callback.
+- [x] Payment failure.
+- [x] Duplicate payment callback.
 - [ ] Product becomes unavailable.
 - [ ] Coupon expires.
 - [x] Order cancellation.
-- [ ] Refund.
+- [x] Refund.
 - [ ] Inventory restoration.

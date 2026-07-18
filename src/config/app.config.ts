@@ -8,6 +8,7 @@ export const appConfig = registerAs('app', () => ({
   databaseUrl: process.env.DATABASE_URL,
   redisUrl: process.env.REDIS_URL,
   jwtSecret: process.env.JWT_SECRET,
+  paymentWebhookSecret: process.env.PAYMENT_WEBHOOK_SECRET ?? process.env.JWT_SECRET,
   shopName: process.env.SHOP_NAME ?? 'Example Store',
   currency: process.env.CURRENCY ?? 'IRR',
 }));

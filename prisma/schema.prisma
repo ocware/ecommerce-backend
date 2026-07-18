@@ -125,6 +125,40 @@ enum OrderRefundStatus {
   FAILED
 }
 
+enum PaymentAttemptStatus {
+  CREATED
+  PENDING
+  AUTHORIZED
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentTransactionKind {
+  AUTHORIZATION
+  CHARGE
+  REFUND
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum PaymentCallbackStatus {
+  PROCESSING
+  PROCESSED
+  FAILED
+  REJECTED
+}
+
+enum PaymentRefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -140,6 +174,7 @@ model StaffUser {
   passwordResetTokens PasswordResetToken[]
   auditLogs           AuditLog[]
   orderInternalNotes  OrderInternalNote[]
+  paymentRefunds      PaymentRefund[]
 
   @@index([role])
   @@index([status])
@@ -521,9 +556,11 @@ model Order {
   createdAt                DateTime               @default(now())
   updatedAt                DateTime               @updatedAt
 
-  customer      Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  items         OrderItem[]
-  internalNotes OrderInternalNote[]
+  customer        Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  internalNotes   OrderInternalNote[]
+  paymentAttempts PaymentAttempt[]
+  paymentRefunds  PaymentRefund[]
 
   @@index([customerId, createdAt])
   @@index([status, createdAt])
@@ -568,6 +605,98 @@ model OrderInternalNote {
 
   @@index([orderId, createdAt])
   @@index([staffUserId])
+}
+
+model PaymentAttempt {
+  id               String               @id @default(uuid()) @db.Uuid
+  orderId          String               @db.Uuid
+  gateway          String
+  idempotencyKey   String               @unique
+  status           PaymentAttemptStatus @default(CREATED)
+  amount           Decimal              @db.Decimal(18, 2)
+  currency         String               @db.VarChar(3)
+  gatewayReference String?
+  redirectUrl      String?
+  failureCode      String?
+  failureMessage   String?
+  metadata         Json?
+  startedAt        DateTime             @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  order        Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  transactions PaymentTransaction[]
+  refunds      PaymentRefund[]
+
+  @@unique([gateway, gatewayReference])
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
+}
+
+model PaymentTransaction {
+  id                          String                   @id @default(uuid()) @db.Uuid
+  paymentAttemptId            String                   @db.Uuid
+  kind                        PaymentTransactionKind
+  status                      PaymentTransactionStatus
+  amount                      Decimal                  @db.Decimal(18, 2)
+  currency                    String                   @db.VarChar(3)
+  idempotencyKey              String                   @unique
+  gatewayReference            String?
+  gatewayTransactionReference String?
+  metadata                    Json?
+  occurredAt                  DateTime                 @default(now())
+  createdAt                   DateTime                 @default(now())
+
+  paymentAttempt PaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+
+  @@index([paymentAttemptId, occurredAt])
+  @@index([gatewayTransactionReference])
+}
+
+model PaymentCallback {
+  id               String                @id @default(uuid()) @db.Uuid
+  gateway          String
+  externalEventId  String
+  gatewayReference String?
+  status           PaymentCallbackStatus @default(PROCESSING)
+  payload          Json
+  errorCode        String?
+  errorMessage     String?
+  processedAt      DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@unique([gateway, externalEventId])
+  @@index([gatewayReference])
+  @@index([status, createdAt])
+}
+
+model PaymentRefund {
+  id                     String              @id @default(uuid()) @db.Uuid
+  paymentAttemptId       String              @db.Uuid
+  orderId                String              @db.Uuid
+  requestedByStaffUserId String              @db.Uuid
+  idempotencyKey         String              @unique
+  status                 PaymentRefundStatus @default(PENDING)
+  amount                 Decimal             @db.Decimal(18, 2)
+  currency               String              @db.VarChar(3)
+  reason                 String?
+  gatewayRefundReference String?
+  failureCode            String?
+  failureMessage         String?
+  metadata               Json?
+  completedAt            DateTime?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  paymentAttempt PaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  requestedBy    StaffUser      @relation(fields: [requestedByStaffUserId], references: [id], onDelete: Restrict)
+
+  @@index([paymentAttemptId, createdAt])
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
 }
 
 model InventoryItem {

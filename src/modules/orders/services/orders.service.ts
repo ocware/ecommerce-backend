@@ -7,7 +7,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { OrderFulfillmentStatus, OrderPaymentStatus, OrderStatus, Prisma } from '@prisma/client';
+import {
+  OrderFulfillmentStatus,
+  OrderPaymentStatus,
+  OrderRefundStatus,
+  OrderStatus,
+  Prisma,
+} from '@prisma/client';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { AuthenticatedStaff } from '../../auth/types/authenticated-staff';
@@ -32,6 +38,20 @@ const orderInclude = Prisma.validator<Prisma.OrderInclude>()({
 
 type OrderRecord = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 type CheckoutAccess = { customerId: string } | { guestToken?: string };
+
+export type PaymentOrderView = {
+  id: string;
+  orderNumber: string;
+  cartId: string;
+  customerId: string | null;
+  status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  refundStatus: OrderRefundStatus;
+  amount: string;
+  currency: string;
+  customer: Prisma.JsonValue;
+  inventoryReservationIds: string[];
+};
 
 @Injectable()
 export class OrdersService {
@@ -111,6 +131,85 @@ export class OrdersService {
       orderBy: { createdAt: 'asc' },
       include: { staffUser: { select: { id: true, name: true, email: true } } },
     });
+  }
+
+  async getPaymentOrderForCustomer(
+    id: string,
+    customer: AuthenticatedCustomer,
+  ): Promise<PaymentOrderView> {
+    const order = await this.requireOrder(id);
+    this.assertCustomerAccess(order, customer.id);
+    return this.toPaymentOrder(order);
+  }
+
+  async getPaymentOrderForGuest(id: string, guestToken?: string): Promise<PaymentOrderView> {
+    const order = await this.requireOrder(id);
+    if (order.customerId) {
+      throw new UnauthorizedException({
+        code: 'ORDER_ACCESS_DENIED',
+        message: 'This order is not a guest order.',
+      });
+    }
+    await this.cartService.verifyCheckoutAccess(order.cartId, { guestToken });
+    return this.toPaymentOrder(order);
+  }
+
+  async getPaymentOrderForAdmin(id: string): Promise<PaymentOrderView> {
+    return this.toPaymentOrder(await this.requireOrder(id));
+  }
+
+  async markPaymentAuthorized(id: string): Promise<PaymentOrderView> {
+    return this.completePaymentOrder(id, OrderPaymentStatus.AUTHORIZED);
+  }
+
+  async markPaymentSucceeded(id: string): Promise<PaymentOrderView> {
+    return this.completePaymentOrder(id, OrderPaymentStatus.PAID);
+  }
+
+  async markPaymentFailed(id: string): Promise<PaymentOrderView> {
+    const order = await this.requireOrder(id);
+    if (
+      order.paymentStatus === OrderPaymentStatus.PAID ||
+      order.paymentStatus === OrderPaymentStatus.AUTHORIZED ||
+      order.paymentStatus === OrderPaymentStatus.PARTIALLY_REFUNDED ||
+      order.paymentStatus === OrderPaymentStatus.REFUNDED
+    ) {
+      return this.toPaymentOrder(order);
+    }
+    await Promise.all(
+      order.items.map((item) =>
+        this.inventoryService.releaseReservation(item.inventoryReservationId),
+      ),
+    );
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: { paymentStatus: OrderPaymentStatus.FAILED },
+      include: orderInclude,
+    });
+    return this.toPaymentOrder(updated);
+  }
+
+  async markRefunded(id: string, refundedAmount: string): Promise<PaymentOrderView> {
+    const order = await this.requireOrder(id);
+    const amount = new Prisma.Decimal(refundedAmount);
+    if (amount.lessThanOrEqualTo(0) || amount.greaterThan(order.grandTotal)) {
+      throw new ConflictException({
+        code: 'INVALID_ORDER_REFUND_TOTAL',
+        message: 'The refunded amount is invalid for this order.',
+      });
+    }
+    const fullyRefunded = amount.equals(order.grandTotal);
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: {
+        paymentStatus: fullyRefunded
+          ? OrderPaymentStatus.REFUNDED
+          : OrderPaymentStatus.PARTIALLY_REFUNDED,
+        refundStatus: fullyRefunded ? OrderRefundStatus.FULL : OrderRefundStatus.PARTIAL,
+      },
+      include: orderInclude,
+    });
+    return this.toPaymentOrder(updated);
   }
 
   private async checkout(
@@ -325,6 +424,38 @@ export class OrdersService {
     return this.serializeOrder(updated, Boolean(staffUserId));
   }
 
+  private async completePaymentOrder(
+    id: string,
+    paymentStatus: 'AUTHORIZED' | 'PAID',
+  ): Promise<PaymentOrderView> {
+    const order = await this.requireOrder(id);
+    if (order.status === OrderStatus.CANCELLED) {
+      throw new ConflictException({
+        code: 'CANCELLED_ORDER_CANNOT_BE_PAID',
+        message: 'A cancelled order cannot accept payment.',
+      });
+    }
+    if (
+      order.paymentStatus === OrderPaymentStatus.PAID ||
+      (paymentStatus === OrderPaymentStatus.AUTHORIZED &&
+        order.paymentStatus === OrderPaymentStatus.AUTHORIZED)
+    ) {
+      return this.toPaymentOrder(order);
+    }
+    await this.inventoryService.confirmReservations(
+      order.items.map((item) => item.inventoryReservationId),
+    );
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: {
+        status: OrderStatus.CONFIRMED,
+        paymentStatus,
+      },
+      include: orderInclude,
+    });
+    return this.toPaymentOrder(updated);
+  }
+
   private async listOrders(query: ListOrdersQueryDto, customerId?: string) {
     const where: Prisma.OrderWhereInput = {
       customerId,
@@ -430,6 +561,22 @@ export class OrdersService {
       internalNotes: includeInternalNotes ? order.internalNotes : undefined,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
+    };
+  }
+
+  private toPaymentOrder(order: OrderRecord): PaymentOrderView {
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      cartId: order.cartId,
+      customerId: order.customerId,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      refundStatus: order.refundStatus,
+      amount: order.grandTotal.toFixed(2),
+      currency: order.currency,
+      customer: order.customerSnapshot,
+      inventoryReservationIds: order.items.map((item) => item.inventoryReservationId),
     };
   }
 }

@@ -83,4 +83,102 @@ describe('InventoryService reservation lifecycle', () => {
       }) as Record<string, unknown>,
     });
   });
+
+  it('confirms all checkout reservations in one transaction', async () => {
+    const now = new Date();
+    const items = [
+      {
+        id: 'inventory-1',
+        variantId: '33333333-3333-4333-8333-333333333333',
+        currentStock: 5,
+        reservedStock: 2,
+        lowStockThreshold: 0,
+        version: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'inventory-2',
+        variantId: '44444444-4444-4444-8444-444444444444',
+        currentStock: 8,
+        reservedStock: 3,
+        lowStockThreshold: 0,
+        version: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+    const activeStatus: InventoryReservationStatus = InventoryReservationStatus.ACTIVE;
+    const reservations = items.map((inventoryItem, index) => ({
+      id: `55555555-5555-4555-8555-55555555555${index}`,
+      inventoryItemId: inventoryItem.id,
+      externalReference: `order-item-${index}`,
+      quantity: index + 2,
+      status: activeStatus,
+      expiresAt: new Date(Date.now() + 60_000),
+      confirmedAt: null as Date | null,
+      releasedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      inventoryItem,
+    }));
+    const confirmedReservationIds = new Set<string>();
+    const transaction = {
+      inventoryReservation: {
+        findMany: jest.fn(() =>
+          reservations.map((reservation) => ({
+            ...reservation,
+            status: confirmedReservationIds.has(reservation.id)
+              ? InventoryReservationStatus.CONFIRMED
+              : InventoryReservationStatus.ACTIVE,
+            confirmedAt: confirmedReservationIds.has(reservation.id) ? new Date() : null,
+          })),
+        ),
+        update: jest.fn(
+          (input: {
+            where: { id: string };
+            data: { status: InventoryReservationStatus; confirmedAt: Date };
+          }) => {
+            const reservation = reservations.find((entry) => entry.id === input.where.id)!;
+            confirmedReservationIds.add(reservation.id);
+            return { ...reservation, ...input.data };
+          },
+        ),
+      },
+      inventoryItem: {
+        updateMany: jest.fn(
+          (input: {
+            where: { id: string; version: number };
+            data: { currentStock: number; reservedStock: number; version: { increment: number } };
+          }) => {
+            const item = items.find((entry) => entry.id === input.where.id)!;
+            if (item.version !== input.where.version) return { count: 0 };
+            item.currentStock = input.data.currentStock;
+            item.reservedStock = input.data.reservedStock;
+            item.version += input.data.version.increment;
+            return { count: 1 };
+          },
+        ),
+      },
+      inventoryMovement: { create: jest.fn(() => ({ id: 'movement-id' })) },
+    };
+    const prisma = {
+      $transaction: jest.fn((operation: (client: typeof transaction) => Promise<unknown>) =>
+        operation(transaction),
+      ),
+    };
+    const service = new InventoryService(prisma as unknown as PrismaService, {} as CatalogService);
+
+    const result = await service.confirmReservations(reservations.map((entry) => entry.id));
+
+    expect(result).toHaveLength(2);
+    expect(result.every((entry) => entry.status === InventoryReservationStatus.CONFIRMED)).toBe(
+      true,
+    );
+    expect(items).toEqual([
+      expect.objectContaining({ currentStock: 3, reservedStock: 0 }),
+      expect.objectContaining({ currentStock: 5, reservedStock: 0 }),
+    ]);
+    expect(transaction.inventoryMovement.create).toHaveBeenCalledTimes(2);
+  });
 });
