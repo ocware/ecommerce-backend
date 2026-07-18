@@ -2,6 +2,7 @@ import { InventoryMovementType, InventoryReservationStatus } from '@prisma/clien
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
+import { InventoryEventPublisher } from './inventory-event-publisher.service';
 import { InventoryService } from './inventory.service';
 
 describe('InventoryService reservation lifecycle', () => {
@@ -65,7 +66,11 @@ describe('InventoryService reservation lifecycle', () => {
         operation(transaction),
       ),
     };
-    const service = new InventoryService(prisma as unknown as PrismaService, {} as CatalogService);
+    const service = new InventoryService(
+      prisma as unknown as PrismaService,
+      {} as CatalogService,
+      { publish: jest.fn() } as unknown as InventoryEventPublisher,
+    );
 
     const result = await service.confirmReservation(reservation.id);
 
@@ -167,7 +172,11 @@ describe('InventoryService reservation lifecycle', () => {
         operation(transaction),
       ),
     };
-    const service = new InventoryService(prisma as unknown as PrismaService, {} as CatalogService);
+    const service = new InventoryService(
+      prisma as unknown as PrismaService,
+      {} as CatalogService,
+      { publish: jest.fn() } as unknown as InventoryEventPublisher,
+    );
 
     const result = await service.confirmReservations(reservations.map((entry) => entry.id));
 

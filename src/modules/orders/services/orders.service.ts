@@ -69,6 +69,15 @@ export type ShippingOrderView = {
   shippingAddress: Prisma.JsonValue;
 };
 
+export type NotificationOrderView = {
+  id: string;
+  orderNumber: string;
+  customerId: string | null;
+  customer: { name: string; email?: string; phone?: string };
+  total: string;
+  currency: string;
+};
+
 @Injectable()
 export class OrdersService {
   private readonly reservationLifetimeMs = 15 * 60 * 1000;
@@ -126,6 +135,18 @@ export class OrdersService {
 
   async getAdminOrder(id: string) {
     return this.serializeOrder(await this.requireOrder(id), true);
+  }
+
+  async getNotificationOrder(id: string): Promise<NotificationOrderView> {
+    const order = await this.requireOrder(id);
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerId: order.customerId,
+      customer: order.customerSnapshot as unknown as NotificationOrderView['customer'],
+      total: order.grandTotal.toFixed(2),
+      currency: order.currency,
+    };
   }
 
   async cancelAdminOrder(id: string, dto: CancelOrderDto, staff: AuthenticatedStaff) {

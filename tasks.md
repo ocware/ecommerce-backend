@@ -189,14 +189,14 @@ This roadmap tracks the NestJS modular monolith implementation for the e-commerc
 
 ## Phase 12: Notifications
 
-- [ ] Create `notifications` module.
-- [ ] Define `EmailProvider` interface.
-- [ ] Define `SmsProvider` interface.
-- [ ] Listen for order, payment, shipment, password reset, low stock, and customer events.
-- [ ] Send email notifications.
-- [ ] Send SMS notifications.
-- [ ] Send admin notifications.
-- [ ] Ensure other modules publish events instead of sending messages directly.
+- [x] Create `notifications` module.
+- [x] Define `EmailProvider` interface.
+- [x] Define `SmsProvider` interface.
+- [x] Listen for order, payment, shipment, password reset, low stock, and customer events.
+- [x] Send email notifications.
+- [x] Send SMS notifications.
+- [x] Send admin notifications.
+- [x] Ensure other modules publish events instead of sending messages directly.
 
 ## Phase 13: Settings
 

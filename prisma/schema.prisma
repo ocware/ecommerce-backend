@@ -189,6 +189,18 @@ enum MediaAssetStatus {
   DELETED
 }
 
+enum NotificationChannel {
+  EMAIL
+  SMS
+  ADMIN
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model StaffUser {
   id           String      @id @default(uuid()) @db.Uuid
   email        String      @unique
@@ -958,6 +970,32 @@ model MediaAsset {
   @@index([type, ownerId, status])
   @@index([type, isActive, position])
   @@index([createdByStaffUserId])
+}
+
+model Notification {
+  id                String              @id @default(uuid()) @db.Uuid
+  eventName         String
+  eventId           String
+  channel           NotificationChannel
+  recipient         String
+  subject           String?
+  body              String
+  status            NotificationStatus  @default(PENDING)
+  provider          String?
+  providerMessageId String?
+  attempts          Int                 @default(0)
+  lastError         String?
+  metadata          Json?
+  sentAt            DateTime?
+  readAt            DateTime?
+  readByStaffUserId String?             @db.Uuid
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([eventName, eventId, channel, recipient])
+  @@index([channel, status, createdAt])
+  @@index([recipient, createdAt])
+  @@index([readAt, createdAt])
 }
 
 model ProductAttribute {

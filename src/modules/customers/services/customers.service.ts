@@ -20,6 +20,7 @@ import { UpdateCustomerProfileDto } from '../dto/update-customer-profile.dto';
 import { UpdateCustomerStatusDto } from '../dto/update-customer-status.dto';
 import { AuthenticatedCustomer } from '../types/authenticated-customer';
 import { CustomerPasswordService } from './customer-password.service';
+import { CustomerEventPublisher } from './customer-event-publisher.service';
 import { CustomerTokenService } from './customer-token.service';
 
 type CustomerAuthResponse = {
@@ -46,6 +47,7 @@ export class CustomersService {
     private readonly prisma: PrismaService,
     private readonly passwordService: CustomerPasswordService,
     private readonly tokenService: CustomerTokenService,
+    private readonly eventPublisher: CustomerEventPublisher,
   ) {}
 
   async register(dto: RegisterCustomerDto): Promise<CustomerAuthResponse> {
@@ -72,6 +74,15 @@ export class CustomersService {
         passwordHash,
         marketingConsent: dto.marketingConsent ?? false,
       },
+    });
+
+    this.eventPublisher.publish({
+      name: 'CustomerRegistered',
+      occurredAt: new Date(),
+      customerId: customer.id,
+      email,
+      phone: customer.phone,
+      customerName: customer.name,
     });
 
     return this.createSessionResponse(customer);

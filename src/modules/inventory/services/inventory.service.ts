@@ -20,6 +20,7 @@ import { ListInventoryQueryDto } from '../dto/list-inventory-query.dto';
 import { ListStockMovementsQueryDto } from '../dto/list-stock-movements-query.dto';
 import { RestoreStockDto } from '../dto/restore-stock.dto';
 import { UpdateLowStockThresholdDto } from '../dto/update-low-stock-threshold.dto';
+import { InventoryEventPublisher } from './inventory-event-publisher.service';
 
 type ReservationWithInventory = Prisma.InventoryReservationGetPayload<{
   include: { inventoryItem: true };
@@ -34,6 +35,7 @@ export class InventoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly catalogService: CatalogService,
+    private readonly eventPublisher: InventoryEventPublisher,
   ) {}
 
   async initializeInventory(dto: InitializeInventoryDto, staffUserId?: string) {
@@ -62,6 +64,7 @@ export class InventoryService {
         return created;
       });
 
+      this.publishIfLow(item);
       return { ...this.toInventorySummary(item), variant };
     } catch (error) {
       if (this.isUniqueConflict(error)) {
@@ -131,6 +134,7 @@ export class InventoryService {
         version: { increment: 1 },
       },
     });
+    this.publishIfLow(updated);
     return this.toInventorySummary(updated);
   }
 
@@ -172,6 +176,7 @@ export class InventoryService {
       return transaction.inventoryItem.findUniqueOrThrow({ where: { id: current.id } });
     });
 
+    this.publishIfLow(item);
     return this.toInventorySummary(item);
   }
 
@@ -238,6 +243,7 @@ export class InventoryService {
         });
       });
 
+      this.publishIfLow(reservation.inventoryItem);
       return this.toReservationSummary(reservation);
     } catch (error) {
       if (this.isUniqueConflict(error)) {
@@ -708,6 +714,26 @@ export class InventoryService {
       releasedAt: reservation.releasedAt,
       availableStock: calculateAvailableStock(reservation.inventoryItem),
     };
+  }
+
+  private publishIfLow(item: {
+    id: string;
+    variantId: string;
+    currentStock: number;
+    reservedStock: number;
+    lowStockThreshold: number;
+    version: number;
+  }): void {
+    if (!isLowStock(item)) return;
+    this.eventPublisher.publish({
+      name: 'InventoryLow',
+      occurredAt: new Date(),
+      eventId: `${item.id}:${item.version}`,
+      inventoryItemId: item.id,
+      variantId: item.variantId,
+      availableStock: calculateAvailableStock(item),
+      lowStockThreshold: item.lowStockThreshold,
+    });
   }
 
   private isUniqueConflict(error: unknown): boolean {

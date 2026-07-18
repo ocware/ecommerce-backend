@@ -2,6 +2,7 @@ import { InventoryReservationStatus, ProductVariantStatus } from '@prisma/client
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CatalogService } from '../../catalog/services/catalog.service';
+import { InventoryEventPublisher } from './inventory-event-publisher.service';
 import { InventoryService } from './inventory.service';
 
 type StockState = {
@@ -118,6 +119,7 @@ describe('InventoryService concurrency', () => {
     const service = new InventoryService(
       prisma as unknown as PrismaService,
       catalog as unknown as CatalogService,
+      { publish: jest.fn() } as unknown as InventoryEventPublisher,
     );
     const expiresAt = new Date(Date.now() + 60_000).toISOString();
 

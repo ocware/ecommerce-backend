@@ -17,6 +17,7 @@ import { RequestPasswordResetDto } from '../dto/request-password-reset.dto';
 import { AuthenticatedStaff } from '../types/authenticated-staff';
 import { StaffStatus } from '../types/staff-role';
 import { AuditLogService } from './audit-log.service';
+import { AuthEventPublisher } from './auth-event-publisher.service';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 
@@ -46,6 +47,7 @@ export class AuthService {
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly auditLogService: AuditLogService,
+    private readonly eventPublisher: AuthEventPublisher,
   ) {}
 
   async createStaffUser(
@@ -261,7 +263,7 @@ export class AuthService {
     }
 
     const resetToken = this.tokenService.createPasswordResetToken();
-    await this.prisma.passwordResetToken.create({
+    const storedResetToken = await this.prisma.passwordResetToken.create({
       data: {
         staffUserId: staff.id,
         tokenHash: resetToken.tokenHash,
@@ -274,6 +276,16 @@ export class AuthService {
       action: 'PASSWORD_RESET_REQUESTED',
       entityType: 'StaffUser',
       entityId: staff.id,
+    });
+
+    this.eventPublisher.publish({
+      name: 'PasswordResetRequested',
+      occurredAt: new Date(),
+      passwordResetTokenId: storedResetToken.id,
+      staffUserId: staff.id,
+      email: staff.email,
+      resetToken: resetToken.token,
+      expiresAt: resetToken.expiresAt,
     });
 
     return {
