@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Subscription } from 'rxjs';
 
 import { BackgroundJobQueue } from '../../../infrastructure/background/background-job-queue.service';
@@ -19,6 +20,8 @@ import { PaymentEventPublisher } from '../../payments/services/payment-event-pub
 import { ShipmentDomainEvent } from '../../shipping/domain/shipment-events';
 import { ShipmentEventPublisher } from '../../shipping/services/shipment-event-publisher.service';
 import { NotificationDeliveryService } from './notification-delivery.service';
+import { EngagementService } from '../../engagement/services/engagement.service';
+import { CustomerNotificationType } from '@prisma/client';
 
 @Injectable()
 export class NotificationEventListener implements OnModuleInit, OnModuleDestroy {
@@ -36,6 +39,8 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
     private readonly customerEvents: CustomerEventPublisher,
     private readonly inventoryEvents: InventoryEventPublisher,
     private readonly features: FeatureToggleService,
+    private readonly engagement: EngagementService,
+    private readonly config: ConfigService,
   ) {}
 
   onModuleInit(): void {
@@ -173,16 +178,23 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
   }
 
   private async handleCustomer(event: CustomerDomainEvent): Promise<void> {
+    if (event.name === 'CustomerPasswordResetRequested') {
+      const appUrl = this.config
+        .get<string>('app.publicAppUrl', 'http://localhost:3000')
+        .replace(/\/$/, '');
+      await this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
+        eventName: event.name,
+        eventId: event.passwordResetTokenId,
+        recipient: event.email,
+        subject: 'بازیابی رمز عبور گالری نقره',
+        body: 'درخواست بازیابی رمز عبور دریافت شد.',
+        deliveryBody: `برای تعیین رمز جدید به ${appUrl}/shop/auth/reset-password?token=${encodeURIComponent(event.resetToken)} بروید. این لینک تا ${event.expiresAt.toISOString()} معتبر است.`,
+        metadata: { customerId: event.customerId },
+      });
+      return;
+    }
     const eventId = event.customerId;
     const deliveries: Promise<unknown>[] = [
-      this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
-        eventName: event.name,
-        eventId,
-        recipient: event.email,
-        subject: 'Welcome',
-        body: `Welcome, ${event.customerName}. Your customer account is ready.`,
-        metadata: { customerId: event.customerId },
-      }),
       this.notifications.sendAdmin({
         eventName: event.name,
         eventId,
@@ -191,6 +203,18 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
         metadata: { customerId: event.customerId, severity: 'info' },
       }),
     ];
+    if (event.email) {
+      deliveries.push(
+        this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
+          eventName: event.name,
+          eventId,
+          recipient: event.email,
+          subject: 'Welcome',
+          body: `Welcome, ${event.customerName}. Your customer account is ready.`,
+          metadata: { customerId: event.customerId },
+        }),
+      );
+    }
     if (event.phone) {
       deliveries.push(
         this.backgroundJobs.add(BackgroundJobName.SMS_DELIVERY, {
@@ -202,10 +226,55 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
         }),
       );
     }
+    deliveries.push(
+      this.engagement.createCustomerNotification({
+        customerId: event.customerId,
+        type: CustomerNotificationType.ACCOUNT,
+        eventName: event.name,
+        eventId,
+        title: 'خوش آمدید',
+        body: `${event.customerName} عزیز، حساب شما آماده است.`,
+        href: '/shop/account',
+      }),
+    );
     await Promise.all(deliveries);
   }
 
   private async handleInventory(event: InventoryDomainEvent): Promise<void> {
+    if (event.name === 'InventoryRestocked') {
+      const subscriptions = await this.engagement.notifyBackInStock(event.variantId);
+      await Promise.all(
+        subscriptions.flatMap((subscription) => {
+          const message = `${subscription.variant.product.name} دوباره موجود شده است.`;
+          const jobs: Promise<unknown>[] = [];
+          if (subscription.customer.phone) {
+            jobs.push(
+              this.backgroundJobs.add(BackgroundJobName.SMS_DELIVERY, {
+                eventName: event.name,
+                eventId: subscription.id,
+                recipient: subscription.customer.phone,
+                body: message,
+                metadata: { variantId: event.variantId, customerId: subscription.customerId },
+              }),
+            );
+          }
+          if (subscription.customer.email) {
+            jobs.push(
+              this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {
+                eventName: event.name,
+                eventId: subscription.id,
+                recipient: subscription.customer.email,
+                subject: 'محصول دوباره موجود شد',
+                body: message,
+                metadata: { variantId: event.variantId, customerId: subscription.customerId },
+              }),
+            );
+          }
+          return jobs;
+        }),
+      );
+      return;
+    }
     await this.notifications.sendAdmin({
       eventName: event.name,
       eventId: event.eventId,
@@ -228,6 +297,22 @@ export class NotificationEventListener implements OnModuleInit, OnModuleDestroy 
   ): Promise<void> {
     const metadata = { orderId: order.id, customerId: order.customerId };
     const deliveries: Promise<unknown>[] = [];
+    if (order.customerId) {
+      const isPlaced = eventName === 'OrderCreated';
+      deliveries.push(
+        this.engagement.createCustomerNotification({
+          customerId: order.customerId,
+          type: isPlaced
+            ? CustomerNotificationType.ORDER_PLACED
+            : CustomerNotificationType.ORDER_STATUS,
+          eventName,
+          eventId,
+          title: isPlaced ? 'سفارش ثبت شد' : 'وضعیت سفارش به‌روز شد',
+          body,
+          href: `/shop/orders/${order.id}`,
+        }),
+      );
+    }
     if (order.customer.email) {
       deliveries.push(
         this.backgroundJobs.add(BackgroundJobName.EMAIL_DELIVERY, {

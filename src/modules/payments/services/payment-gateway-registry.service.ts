@@ -5,6 +5,7 @@ import { PaymentGateway, PaymentGatewayName } from '../contracts/payment-gateway
 import { CashOnDeliveryGateway } from '../gateways/cash-on-delivery.gateway';
 import { DevelopmentPaymentGateway } from '../gateways/development-payment.gateway';
 import { ManualBankTransferGateway } from '../gateways/manual-bank-transfer.gateway';
+import { ZarinpalPaymentGateway } from '../gateways/zarinpal-payment.gateway';
 
 @Injectable()
 export class PaymentGatewayRegistry {
@@ -15,12 +16,13 @@ export class PaymentGatewayRegistry {
     development: DevelopmentPaymentGateway,
     manualBankTransfer: ManualBankTransferGateway,
     cashOnDelivery: CashOnDeliveryGateway,
+    zarinpal: ZarinpalPaymentGateway,
   ) {
     const enabled = new Set(
       config.get<PaymentGatewayName[]>('app.paymentGateways', Object.values(PaymentGatewayName)),
     );
     this.gateways = new Map(
-      [development, manualBankTransfer, cashOnDelivery]
+      [development, manualBankTransfer, cashOnDelivery, zarinpal]
         .filter((gateway) => enabled.has(gateway.name))
         .map((gateway) => [gateway.name, gateway]),
     );

@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { CommunicationsModule } from '../../shared/communications/communications.module';
 import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
+import { EngagementModule } from '../engagement/engagement.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { OrdersModule } from '../orders/orders.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { EMAIL_PROVIDER } from './contracts/email-provider';
-import { SMS_PROVIDER } from './contracts/sms-provider';
 import { AdminNotificationsController } from './controllers/admin-notifications.controller';
 import { DevelopmentEmailProvider } from './providers/development-email.provider';
-import { DevelopmentSmsProvider } from './providers/development-sms.provider';
+import { SmtpEmailProvider } from './providers/smtp-email.provider';
 import { NotificationDeliveryService } from './services/notification-delivery.service';
 import { NotificationEventListener } from './services/notification-event-listener.service';
 
@@ -19,36 +20,34 @@ import { NotificationEventListener } from './services/notification-event-listene
   imports: [
     AuthModule,
     CustomersModule,
+    EngagementModule,
     InventoryModule,
     OrdersModule,
     PaymentsModule,
     ShippingModule,
+    CommunicationsModule,
   ],
   controllers: [AdminNotificationsController],
   providers: [
     DevelopmentEmailProvider,
-    DevelopmentSmsProvider,
+    SmtpEmailProvider,
     {
       provide: EMAIL_PROVIDER,
-      inject: [ConfigService, DevelopmentEmailProvider],
-      useFactory: (config: ConfigService, development: DevelopmentEmailProvider) => {
+      inject: [ConfigService, DevelopmentEmailProvider, SmtpEmailProvider],
+      useFactory: (
+        config: ConfigService,
+        development: DevelopmentEmailProvider,
+        smtp: SmtpEmailProvider,
+      ) => {
         const provider = config.get<string>('app.emailProvider', 'development');
         if (provider === 'development') return development;
+        if (provider === 'smtp') return smtp;
         throw new Error(`Unsupported email provider: ${provider}`);
-      },
-    },
-    {
-      provide: SMS_PROVIDER,
-      inject: [ConfigService, DevelopmentSmsProvider],
-      useFactory: (config: ConfigService, development: DevelopmentSmsProvider) => {
-        const provider = config.get<string>('app.smsProvider', 'development');
-        if (provider === 'development') return development;
-        throw new Error(`Unsupported SMS provider: ${provider}`);
       },
     },
     NotificationDeliveryService,
     NotificationEventListener,
   ],
-  exports: [NotificationDeliveryService, EMAIL_PROVIDER, SMS_PROVIDER],
+  exports: [NotificationDeliveryService, EMAIL_PROVIDER],
 })
 export class NotificationsModule {}

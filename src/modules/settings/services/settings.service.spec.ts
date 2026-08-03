@@ -9,6 +9,11 @@ describe('SettingsService', () => {
   const settings: ShopSettings = {
     id: 'default',
     shopName: 'Example Store',
+    shopActive: true,
+    contactPhone: null,
+    contactEmail: null,
+    address: null,
+    footerText: null,
     currency: 'USD',
     taxEnabled: false,
     taxRate: new Prisma.Decimal(0),
@@ -16,6 +21,8 @@ describe('SettingsService', () => {
     orderPrefix: 'ORD',
     lowStockThreshold: 3,
     guestCheckoutEnabled: true,
+    returnsEnabled: true,
+    returnWindowDays: 7,
     version: 0,
     updatedByStaffUserId: null,
     createdAt: new Date(),
@@ -53,6 +60,11 @@ describe('SettingsService', () => {
   it('returns typed database-backed storefront settings', async () => {
     await expect(service.get()).resolves.toEqual({
       shopName: 'Example Store',
+      shopActive: true,
+      contactPhone: null,
+      contactEmail: null,
+      address: null,
+      footerText: null,
       currency: 'USD',
       taxEnabled: false,
       taxRate: '0.0000',
@@ -60,6 +72,8 @@ describe('SettingsService', () => {
       orderPrefix: 'ORD',
       lowStockThreshold: 3,
       guestCheckoutEnabled: true,
+      returnsEnabled: true,
+      returnWindowDays: 7,
     });
   });
 

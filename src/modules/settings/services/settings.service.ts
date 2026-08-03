@@ -8,16 +8,24 @@ import { UpdateShopSettingsDto } from '../dto/update-shop-settings.dto';
 const settingsId = 'default';
 const settingsDefaults = {
   shopName: 'Example Store',
+  shopActive: true,
   currency: 'IRR',
   taxEnabled: false,
   taxRate: new Prisma.Decimal(0),
   orderPrefix: 'ORD',
   lowStockThreshold: 0,
   guestCheckoutEnabled: true,
+  returnsEnabled: true,
+  returnWindowDays: 7,
 };
 
 export type StorefrontSettings = {
   shopName: string;
+  shopActive: boolean;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  address: string | null;
+  footerText: string | null;
   currency: string;
   taxEnabled: boolean;
   taxRate: string;
@@ -25,6 +33,8 @@ export type StorefrontSettings = {
   orderPrefix: string;
   lowStockThreshold: number;
   guestCheckoutEnabled: boolean;
+  returnsEnabled: boolean;
+  returnWindowDays: number;
 };
 
 @Injectable()
@@ -72,6 +82,11 @@ export class SettingsService {
       where: { id: settingsId },
       data: {
         shopName: dto.shopName?.trim(),
+        shopActive: dto.shopActive,
+        contactPhone: dto.contactPhone?.trim(),
+        contactEmail: dto.contactEmail?.trim().toLowerCase(),
+        address: dto.address?.trim(),
+        footerText: dto.footerText?.trim(),
         currency: dto.currency,
         taxEnabled: dto.taxEnabled,
         taxRate: dto.taxRate !== undefined ? new Prisma.Decimal(dto.taxRate) : undefined,
@@ -79,6 +94,8 @@ export class SettingsService {
         orderPrefix: dto.orderPrefix,
         lowStockThreshold: dto.lowStockThreshold,
         guestCheckoutEnabled: dto.guestCheckoutEnabled,
+        returnsEnabled: dto.returnsEnabled,
+        returnWindowDays: dto.returnWindowDays,
         updatedByStaffUserId: staffUserId,
         version: { increment: 1 },
       },
@@ -97,6 +114,11 @@ export class SettingsService {
   private serialize(settings: ShopSettings): StorefrontSettings {
     return {
       shopName: settings.shopName,
+      shopActive: settings.shopActive,
+      contactPhone: settings.contactPhone,
+      contactEmail: settings.contactEmail,
+      address: settings.address,
+      footerText: settings.footerText,
       currency: settings.currency,
       taxEnabled: settings.taxEnabled,
       taxRate: settings.taxRate.toFixed(4),
@@ -104,6 +126,8 @@ export class SettingsService {
       orderPrefix: settings.orderPrefix,
       lowStockThreshold: settings.lowStockThreshold,
       guestCheckoutEnabled: settings.guestCheckoutEnabled,
+      returnsEnabled: settings.returnsEnabled,
+      returnWindowDays: settings.returnWindowDays,
     };
   }
 }

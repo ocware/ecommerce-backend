@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentStaff } from '../../auth/decorators/current-staff.decorator';
@@ -8,6 +8,7 @@ import { StaffAuthGuard } from '../../auth/guards/staff-auth.guard';
 import { Permission } from '../../auth/permissions/permission';
 import { AuthenticatedStaff } from '../../auth/types/authenticated-staff';
 import { AddCustomerNoteDto } from '../dto/add-customer-note.dto';
+import { ListCustomersQueryDto } from '../dto/list-customers-query.dto';
 import { UpdateCustomerStatusDto } from '../dto/update-customer-status.dto';
 import { CustomersService } from '../services/customers.service';
 
@@ -23,8 +24,8 @@ export class AdminCustomersController {
 
   @Get()
   @RequirePermissions(Permission.ManageCustomers)
-  listCustomers() {
-    return this.customersService.listCustomers();
+  listCustomers(@Query() query: ListCustomersQueryDto) {
+    return this.customersService.listCustomers(query);
   }
 
   @Get(':id')

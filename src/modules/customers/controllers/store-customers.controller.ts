@@ -1,14 +1,30 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentCustomer } from '../decorators/current-customer.decorator';
 import { CreateCustomerAddressDto } from '../dto/create-customer-address.dto';
+import { ConfirmCustomerPasswordResetDto } from '../dto/confirm-customer-password-reset.dto';
+import { CompleteCustomerOtpRegistrationDto } from '../dto/complete-customer-otp-registration.dto';
 import { CreateGuestCheckoutProfileDto } from '../dto/create-guest-checkout-profile.dto';
 import { LoginCustomerDto } from '../dto/login-customer.dto';
 import { LogoutCustomerDto } from '../dto/logout-customer.dto';
 import { RefreshCustomerTokenDto } from '../dto/refresh-customer-token.dto';
+import { RequestCustomerOtpDto } from '../dto/request-customer-otp.dto';
+import { RequestCustomerPasswordResetDto } from '../dto/request-customer-password-reset.dto';
 import { RegisterCustomerDto } from '../dto/register-customer.dto';
 import { UpdateCustomerProfileDto } from '../dto/update-customer-profile.dto';
+import { UpdateCustomerAddressDto } from '../dto/update-customer-address.dto';
+import { VerifyCustomerOtpDto } from '../dto/verify-customer-otp.dto';
 import { CustomerAuthGuard } from '../guards/customer-auth.guard';
 import { CustomersService } from '../services/customers.service';
 import { AuthenticatedCustomer } from '../types/authenticated-customer';
@@ -29,6 +45,31 @@ export class StoreCustomersController {
   @Post('login')
   login(@Body() dto: LoginCustomerDto) {
     return this.customersService.login(dto);
+  }
+
+  @Post('password-reset/request')
+  requestPasswordReset(@Body() dto: RequestCustomerPasswordResetDto) {
+    return this.customersService.requestPasswordReset(dto);
+  }
+
+  @Post('password-reset/confirm')
+  confirmPasswordReset(@Body() dto: ConfirmCustomerPasswordResetDto) {
+    return this.customersService.confirmPasswordReset(dto);
+  }
+
+  @Post('otp/request')
+  requestOtp(@Body() dto: RequestCustomerOtpDto) {
+    return this.customersService.requestOtp(dto);
+  }
+
+  @Post('otp/verify')
+  verifyOtp(@Body() dto: VerifyCustomerOtpDto) {
+    return this.customersService.verifyOtp(dto);
+  }
+
+  @Post('otp/register')
+  completeOtpRegistration(@Body() dto: CompleteCustomerOtpRegistrationDto) {
+    return this.customersService.completeOtpRegistration(dto);
   }
 
   @Post('refresh')
@@ -77,11 +118,25 @@ export class StoreCustomersController {
     return this.customersService.createAddress(customer, dto);
   }
 
-  @Get('me/orders')
+  @Patch('me/addresses/:id')
   @ApiBearerAuth()
   @UseGuards(CustomerAuthGuard)
-  listOrderHistory() {
-    return this.customersService.listOrderHistory();
+  updateAddress(
+    @CurrentCustomer() customer: AuthenticatedCustomer,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateCustomerAddressDto,
+  ) {
+    return this.customersService.updateAddress(customer, id, dto);
+  }
+
+  @Delete('me/addresses/:id')
+  @ApiBearerAuth()
+  @UseGuards(CustomerAuthGuard)
+  deleteAddress(
+    @CurrentCustomer() customer: AuthenticatedCustomer,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.customersService.deleteAddress(customer, id);
   }
 
   @Post('guest-checkout-profile')

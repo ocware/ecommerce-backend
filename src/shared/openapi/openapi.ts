@@ -60,6 +60,19 @@ const TAG_DESCRIPTIONS: Record<string, string> = {
   'admin shipments': 'Shipment creation, cancellation, tracking, and fulfillment administration.',
   'admin shipping configuration': 'Shipping methods, zones, rates, and provider configuration.',
   'store shipping': 'Storefront shipping-rate calculation and available delivery methods.',
+  'store returns':
+    'Customer return and exchange requests, eligibility, history, and cancellation.',
+  'admin returns':
+    'Return review, receipt, refund coordination, and replacement-order orchestration.',
+  'store engagement':
+    'Customer reviews, wishlist, stock alerts, and in-app notification operations.',
+  'store reviews': 'Published product reviews and aggregate product-rating summaries.',
+  'admin reviews': 'Verified-purchase review moderation and publication controls.',
+  'store content': 'Published structured home content and Markdown information pages.',
+  'admin content': 'Structured home merchandising and Markdown page administration.',
+  'store analytics':
+    'Consent recording and privacy-gated first-party storefront event collection.',
+  'admin analytics': 'Consent-respecting conversion funnel and commerce measurement.',
 };
 
 const PARAMETER_DESCRIPTIONS: Record<string, string> = {

@@ -19,6 +19,7 @@ const salesPaymentStatuses = [
 ];
 
 type ReportRange = { from: Date; to: Date; currency?: string };
+const reportTimezone = 'Asia/Tehran';
 
 @Injectable()
 export class ReportsService {
@@ -64,7 +65,7 @@ export class ReportsService {
     });
     const grouped = new Map<string, { orderCount: number; grossSales: Prisma.Decimal }>();
     for (const row of rows) {
-      const date = row.createdAt.toISOString().slice(0, 10);
+      const date = this.tehranDateKey(row.createdAt);
       const current = grouped.get(date) ?? {
         orderCount: 0,
         grossSales: new Prisma.Decimal(0),
@@ -76,7 +77,7 @@ export class ReportsService {
 
     return {
       range: this.serializeRange(range),
-      timezone: 'UTC',
+      timezone: reportTimezone,
       points: this.calendarDates(range).map((date) => {
         const value = grouped.get(date);
         return {
@@ -246,9 +247,9 @@ export class ReportsService {
   }
 
   private resolveRange(query: ReportRangeQueryDto): ReportRange {
-    const to = query.to ? new Date(query.to) : new Date();
+    const to = query.to ? this.parseBoundary(query.to, false) : new Date();
     const from = query.from
-      ? new Date(query.from)
+      ? this.parseBoundary(query.from, true)
       : new Date(to.getTime() - 29 * 24 * 60 * 60 * 1_000);
     if (from > to) {
       throw new BadRequestException({
@@ -274,17 +275,36 @@ export class ReportsService {
   }
 
   private calendarDates(range: ReportRange): string[] {
-    const cursor = new Date(
-      Date.UTC(range.from.getUTCFullYear(), range.from.getUTCMonth(), range.from.getUTCDate()),
-    );
-    const end = new Date(
-      Date.UTC(range.to.getUTCFullYear(), range.to.getUTCMonth(), range.to.getUTCDate()),
-    );
+    const cursor = new Date(`${this.tehranDateKey(range.from)}T00:00:00.000Z`);
+    const end = new Date(`${this.tehranDateKey(range.to)}T00:00:00.000Z`);
     const dates: string[] = [];
     while (cursor <= end) {
       dates.push(cursor.toISOString().slice(0, 10));
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
     return dates;
+  }
+
+  private parseBoundary(value: string, startOfDay: boolean): Date {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return new Date(
+        `${value}T${startOfDay ? '00:00:00.000' : '23:59:59.999'}+03:30`,
+      );
+    }
+    return new Date(value);
+  }
+
+  private tehranDateKey(value: Date): string {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: reportTimezone,
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(value);
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((entry) => entry.type === type)?.value ?? '';
+    return `${part('year')}-${part('month')}-${part('day')}`;
   }
 }

@@ -13,6 +13,6 @@ export class InventoryEventPublisher {
   }
 
   stream(): Observable<InventoryDomainEvent> {
-    return this.events.stream<InventoryDomainEvent>(['InventoryLow']);
+    return this.events.stream<InventoryDomainEvent>(['InventoryLow', 'InventoryRestocked']);
   }
 }

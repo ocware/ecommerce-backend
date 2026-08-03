@@ -8,6 +8,7 @@ import { Permission } from '../../auth/permissions/permission';
 import { CreateAttributeValueDto } from '../dto/create-attribute-value.dto';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { CreateCategoryDto } from '../dto/create-category.dto';
+import { CreateConfiguredProductDto } from '../dto/create-configured-product.dto';
 import { CreateProductAttributeDto } from '../dto/create-product-attribute.dto';
 import { CreateProductCollectionDto } from '../dto/create-product-collection.dto';
 import { CreateProductImageDto } from '../dto/create-product-image.dto';
@@ -35,6 +36,11 @@ export class AdminCatalogController {
   @Post('products')
   createProduct(@Body() dto: CreateProductDto) {
     return this.catalogService.createProduct(dto);
+  }
+
+  @Post('products/configured')
+  createConfiguredProduct(@Body() dto: CreateConfiguredProductDto) {
+    return this.catalogService.createConfiguredProduct(dto);
   }
 
   @Get('products')

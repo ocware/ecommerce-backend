@@ -10,6 +10,8 @@ import { PaymentEventPublisher } from '../../payments/services/payment-event-pub
 import { ShipmentEventPublisher } from '../../shipping/services/shipment-event-publisher.service';
 import { NotificationDeliveryService } from './notification-delivery.service';
 import { NotificationEventListener } from './notification-event-listener.service';
+import { EngagementService } from '../../engagement/services/engagement.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('NotificationEventListener', () => {
   const orderId = '11111111-1111-4111-8111-111111111111';
@@ -38,6 +40,10 @@ describe('NotificationEventListener', () => {
   const authEvents = new AuthEventPublisher();
   const customerEvents = new CustomerEventPublisher();
   const inventoryEvents = new InventoryEventPublisher();
+  const engagement = {
+    createCustomerNotification: jest.fn(() => Promise.resolve()),
+    notifyBackInStock: jest.fn(() => Promise.resolve([])),
+  };
   const listener = new NotificationEventListener(
     notifications as unknown as NotificationDeliveryService,
     backgroundJobs as unknown as BackgroundJobQueue,
@@ -49,6 +55,8 @@ describe('NotificationEventListener', () => {
     customerEvents,
     inventoryEvents,
     { isEnabled: () => true } as unknown as FeatureToggleService,
+    engagement as unknown as EngagementService,
+    { get: (_key: string, fallback: string) => fallback } as unknown as ConfigService,
   );
 
   beforeAll(() => listener.onModuleInit());
@@ -115,6 +123,15 @@ describe('NotificationEventListener', () => {
       phone: '+12025550123',
       customerName: 'Customer',
     });
+    customerEvents.publish({
+      name: 'CustomerPasswordResetRequested',
+      occurredAt: new Date(),
+      customerId: 'customer-id',
+      passwordResetTokenId: 'customer-reset-id',
+      email: 'customer@example.test',
+      resetToken: 'customer-reset-token',
+      expiresAt: new Date(Date.now() + 60_000),
+    });
     inventoryEvents.publish({
       name: 'InventoryLow',
       occurredAt: new Date(),
@@ -133,6 +150,15 @@ describe('NotificationEventListener', () => {
     expect(backgroundJobs.add).toHaveBeenCalledWith(
       BackgroundJobName.SMS_DELIVERY,
       expect.objectContaining({ eventName: 'CustomerRegistered' }),
+    );
+    expect(backgroundJobs.add).toHaveBeenCalledWith(
+      BackgroundJobName.EMAIL_DELIVERY,
+      expect.objectContaining({
+        eventName: 'CustomerPasswordResetRequested',
+        deliveryBody: expect.stringContaining(
+          '/shop/auth/reset-password?token=customer-reset-token',
+        ) as string,
+      }),
     );
     expect(notifications.sendAdmin).toHaveBeenCalledWith(
       expect.objectContaining({ eventName: 'InventoryLow' }),

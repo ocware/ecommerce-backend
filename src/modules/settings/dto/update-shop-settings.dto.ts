@@ -24,6 +24,35 @@ export class UpdateShopSettingsDto {
   @MaxLength(200)
   shopName?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  shopActive?: boolean;
+
+  @ApiPropertyOptional({ maxLength: 40 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  contactPhone?: string;
+
+  @ApiPropertyOptional({ maxLength: 320 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  contactEmail?: string;
+
+  @ApiPropertyOptional({ maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  address?: string;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  footerText?: string;
+
   @ApiPropertyOptional({ example: 'USD' })
   @IsOptional()
   @Matches(/^[A-Z]{3}$/)
@@ -62,4 +91,16 @@ export class UpdateShopSettingsDto {
   @IsOptional()
   @IsBoolean()
   guestCheckoutEnabled?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  returnsEnabled?: boolean;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 365, default: 7 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  returnWindowDays?: number;
 }

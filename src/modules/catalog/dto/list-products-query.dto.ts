@@ -1,12 +1,26 @@
 import { ProductStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 export enum ProductSort {
   Newest = 'newest',
   NameAsc = 'name_asc',
   NameDesc = 'name_desc',
+  PriceAsc = 'price_asc',
+  PriceDesc = 'price_desc',
+  Bestselling = 'bestseller',
+  Popular = 'popular',
 }
 
 export class ListProductsQueryDto {
@@ -39,6 +53,22 @@ export class ListProductsQueryDto {
   @IsOptional()
   @IsEnum(ProductStatus)
   status?: ProductStatus;
+
+  @ApiProperty({ required: false, description: 'Minimum fixed variant price in minor currency units.' })
+  @IsOptional()
+  @IsNumberString()
+  minPrice?: string;
+
+  @ApiProperty({ required: false, description: 'Maximum fixed variant price in minor currency units.' })
+  @IsOptional()
+  @IsNumberString()
+  maxPrice?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  inStock?: boolean;
 
   @ApiProperty({ required: false, default: 1 })
   @IsOptional()

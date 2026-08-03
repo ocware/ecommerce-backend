@@ -13,6 +13,9 @@ export class CustomerEventPublisher {
   }
 
   stream(): Observable<CustomerDomainEvent> {
-    return this.events.stream<CustomerDomainEvent>(['CustomerRegistered']);
+    return this.events.stream<CustomerDomainEvent>([
+      'CustomerRegistered',
+      'CustomerPasswordResetRequested',
+    ]);
   }
 }

@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { StaffSessionStatus } from '@prisma/client';
+import { StaffRole, StaffSessionStatus, StaffStatus as PrismaStaffStatus } from '@prisma/client';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { ConfirmPasswordResetDto } from '../dto/confirm-password-reset.dto';
@@ -14,6 +14,7 @@ import { LoginDto } from '../dto/login.dto';
 import { LogoutDto } from '../dto/logout.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { RequestPasswordResetDto } from '../dto/request-password-reset.dto';
+import { UpdateStaffUserDto } from '../dto/update-staff-user.dto';
 import { AuthenticatedStaff } from '../types/authenticated-staff';
 import { StaffStatus } from '../types/staff-role';
 import { AuditLogService } from './audit-log.service';
@@ -53,7 +54,7 @@ export class AuthService {
   async createStaffUser(
     dto: CreateStaffUserDto,
     actor: AuthenticatedStaff,
-  ): Promise<AuthResponse['staff']> {
+  ) {
     const existing = await this.prisma.staffUser.findUnique({
       where: {
         email: dto.email.toLowerCase(),
@@ -88,7 +89,7 @@ export class AuthService {
       },
     });
 
-    return this.serializeStaff(staff);
+    return this.serializeAdminStaff(staff);
   }
 
   async login(dto: LoginDto, context: RequestContext): Promise<AuthResponse> {
@@ -385,17 +386,17 @@ export class AuthService {
     };
   }
 
-  async listStaffUsers(): Promise<AuthResponse['staff'][]> {
+  async listStaffUsers() {
     const staffUsers = await this.prisma.staffUser.findMany({
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    return staffUsers.map((staff) => this.serializeStaff(staff));
+    return staffUsers.map((staff) => this.serializeAdminStaff(staff));
   }
 
-  async findStaffById(id: string): Promise<AuthResponse['staff']> {
+  async findStaffById(id: string) {
     const staff = await this.prisma.staffUser.findUnique({
       where: {
         id,
@@ -409,7 +410,68 @@ export class AuthService {
       });
     }
 
-    return this.serializeStaff(staff);
+    return this.serializeAdminStaff(staff);
+  }
+
+  async updateStaffUser(id: string, dto: UpdateStaffUserDto, actor: AuthenticatedStaff) {
+    const staff = await this.prisma.staffUser.findUnique({ where: { id } });
+    if (!staff) {
+      throw new NotFoundException({
+        code: 'STAFF_USER_NOT_FOUND',
+        message: 'Staff user was not found.',
+      });
+    }
+    if (id === actor.id && dto.status && dto.status !== PrismaStaffStatus.ACTIVE) {
+      throw new ConflictException({
+        code: 'STAFF_CANNOT_DISABLE_SELF',
+        message: 'A staff user cannot disable their own active account.',
+      });
+    }
+    const removesActiveOwner =
+      staff.role === StaffRole.OWNER &&
+      staff.status === PrismaStaffStatus.ACTIVE &&
+      (dto.role !== undefined && dto.role !== StaffRole.OWNER ||
+        dto.status !== undefined && dto.status !== PrismaStaffStatus.ACTIVE);
+    if (removesActiveOwner) {
+      const ownerCount = await this.prisma.staffUser.count({
+        where: { role: StaffRole.OWNER, status: PrismaStaffStatus.ACTIVE },
+      });
+      if (ownerCount <= 1) {
+        throw new ConflictException({
+          code: 'LAST_OWNER_REQUIRED',
+          message: 'At least one active owner account is required.',
+        });
+      }
+    }
+
+    const updated = await this.prisma.$transaction(async (transaction) => {
+      const result = await transaction.staffUser.update({
+        where: { id },
+        data: {
+          name: dto.name?.trim(),
+          role: dto.role,
+          status: dto.status,
+        },
+      });
+      if (
+        (dto.role && dto.role !== staff.role) ||
+        (dto.status && dto.status !== PrismaStaffStatus.ACTIVE)
+      ) {
+        await transaction.staffSession.updateMany({
+          where: { staffUserId: id, status: StaffSessionStatus.ACTIVE },
+          data: { status: StaffSessionStatus.REVOKED, revokedAt: new Date() },
+        });
+      }
+      return result;
+    });
+    await this.auditLogService.record({
+      staffUserId: actor.id,
+      action: 'STAFF_USER_UPDATED',
+      entityType: 'StaffUser',
+      entityId: id,
+      metadata: { role: updated.role, status: updated.status },
+    });
+    return this.serializeAdminStaff(updated);
   }
 
   private serializeStaff(staff: {
@@ -423,6 +485,25 @@ export class AuthService {
       email: staff.email,
       name: staff.name,
       role: staff.role,
+    };
+  }
+
+  private serializeAdminStaff(staff: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    status: string;
+    lastLoginAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      ...this.serializeStaff(staff),
+      status: staff.status,
+      lastLoginAt: staff.lastLoginAt,
+      createdAt: staff.createdAt,
+      updatedAt: staff.updatedAt,
     };
   }
 }

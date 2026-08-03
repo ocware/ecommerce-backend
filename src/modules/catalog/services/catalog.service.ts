@@ -10,6 +10,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { CreateAttributeValueDto } from '../dto/create-attribute-value.dto';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { CreateCategoryDto } from '../dto/create-category.dto';
+import { CreateConfiguredProductDto } from '../dto/create-configured-product.dto';
 import { CreateProductAttributeDto } from '../dto/create-product-attribute.dto';
 import { CreateProductCollectionDto } from '../dto/create-product-collection.dto';
 import { CreateProductImageDto } from '../dto/create-product-image.dto';
@@ -38,6 +39,7 @@ const adminProductInclude = {
     },
     include: {
       prices: true,
+      inventory: true,
       attributeValues: {
         include: {
           attributeValue: {
@@ -102,6 +104,112 @@ export class CatalogService {
       'PRODUCT_CONFLICT',
       'A product with this slug already exists.',
     );
+  }
+
+  async createConfiguredProduct(dto: CreateConfiguredProductDto) {
+    if (dto.brandId) await this.requireBrand(dto.brandId);
+    if (dto.categoryId) await this.requireCategory(dto.categoryId);
+    try {
+      const productId = await this.prisma.$transaction(async (transaction) => {
+        const settings = await transaction.shopSettings.findUnique({
+          where: { id: 'default' },
+          select: { lowStockThreshold: true },
+        });
+        const product = await transaction.product.create({
+          data: {
+            name: dto.name.trim(),
+            slug: dto.slug,
+            description: dto.description?.trim(),
+            status: dto.status,
+            brandId: dto.brandId,
+            publishedAt: dto.status === ProductStatus.ACTIVE ? new Date() : undefined,
+            categories: dto.categoryId
+              ? { create: { categoryId: dto.categoryId } }
+              : undefined,
+          },
+        });
+        const attributeValues = new Map<string, Map<string, string>>();
+        const definitions = new Map<string, Set<string>>();
+        for (const variant of dto.variants) {
+          for (const [name, value] of Object.entries(variant.attributes)) {
+            if (!definitions.has(name)) definitions.set(name, new Set());
+            definitions.get(name)!.add(value);
+          }
+        }
+        let attributePosition = 0;
+        for (const [name, values] of definitions) {
+          const attribute = await transaction.productAttribute.create({
+            data: { productId: product.id, name, position: attributePosition++ },
+          });
+          const valueMap = new Map<string, string>();
+          let valuePosition = 0;
+          for (const value of values) {
+            const created = await transaction.productAttributeValue.create({
+              data: { attributeId: attribute.id, value, position: valuePosition++ },
+            });
+            valueMap.set(value, created.id);
+          }
+          attributeValues.set(name, valueMap);
+        }
+        for (const [position, row] of dto.variants.entries()) {
+          const variant = await transaction.productVariant.create({
+            data: {
+              productId: product.id,
+              name: row.name.trim(),
+              sku: this.normalizeSku(row.sku),
+              status: ProductVariantStatus.ACTIVE,
+              isDefault: position === 0,
+              position,
+              prices: {
+                create: {
+                  currency: 'IRR',
+                  amount: new Prisma.Decimal(row.price),
+                  compareAtAmount: row.compareAtPrice
+                    ? new Prisma.Decimal(row.compareAtPrice)
+                    : undefined,
+                },
+              },
+              inventory: {
+                create: {
+                  currentStock: row.stock,
+                  lowStockThreshold: settings?.lowStockThreshold ?? 0,
+                  movements: {
+                    create: {
+                      type: 'INITIALIZED',
+                      currentStockDelta: row.stock,
+                      resultingCurrentStock: row.stock,
+                      resultingReservedStock: 0,
+                      reason: 'Inventory initialized with configured product.',
+                    },
+                  },
+                },
+              },
+            },
+          });
+          const valueIds = Object.entries(row.attributes).map(([name, value]) =>
+            attributeValues.get(name)!.get(value)!,
+          );
+          if (valueIds.length) {
+            await transaction.variantAttributeValue.createMany({
+              data: valueIds.map((attributeValueId) => ({
+                variantId: variant.id,
+                attributeValueId,
+              })),
+            });
+          }
+        }
+        return product.id;
+      });
+      return this.findAdminProduct(productId);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException({
+          code: 'CONFIGURED_PRODUCT_CONFLICT',
+          message: 'The product slug or one of its SKUs already exists.',
+        });
+      }
+      throw error;
+    }
   }
 
   async getVariantReference(id: string) {
@@ -560,34 +668,150 @@ export class CatalogService {
 
   async listStoreProducts(query: ListProductsQueryDto) {
     const where = this.buildProductWhere(query, true);
-    const orderBy = this.buildProductOrder(query.sort);
     const skip = (query.page - 1) * query.limit;
-    const [total, items] = await this.prisma.$transaction([
+    const specialSort =
+      Boolean(query.inStock) ||
+      [
+      ProductSort.PriceAsc,
+      ProductSort.PriceDesc,
+      ProductSort.Bestselling,
+      ProductSort.Popular,
+      ].includes(query.sort);
+    const include = {
+      brand: true,
+      categories: {
+        where: { category: { isActive: true } },
+        include: { category: true },
+      },
+      images: { orderBy: { position: 'asc' as const }, take: 1 },
+      variants: {
+        where: { status: ProductVariantStatus.ACTIVE },
+        orderBy: { position: 'asc' as const },
+        include: {
+          prices: { where: query.currency ? { currency: query.currency } : undefined },
+          inventory: true,
+        },
+      },
+    };
+    const [databaseTotal, foundItems] = await this.prisma.$transaction([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({
         where,
-        orderBy,
-        skip,
-        take: query.limit,
-        include: {
-          brand: true,
-          categories: {
-            where: { category: { isActive: true } },
-            include: { category: true },
-          },
-          images: { orderBy: { position: 'asc' }, take: 1 },
-          variants: {
-            where: { status: ProductVariantStatus.ACTIVE },
-            orderBy: { position: 'asc' },
-            include: {
-              prices: { where: query.currency ? { currency: query.currency } : undefined },
-            },
-          },
-        },
+        orderBy: specialSort ? undefined : this.buildProductOrder(query.sort),
+        skip: specialSort ? undefined : skip,
+        take: specialSort ? undefined : query.limit,
+        include,
       }),
     ]);
+    let rawItems = foundItems;
+    if (query.inStock) {
+      rawItems = rawItems.filter((product) =>
+        product.variants.some(
+          (variant) =>
+            (variant.inventory?.currentStock ?? 0) -
+              (variant.inventory?.reservedStock ?? 0) >
+            0,
+        ),
+      );
+    }
+    const total = query.inStock ? rawItems.length : databaseTotal;
+    if (query.sort === ProductSort.PriceAsc || query.sort === ProductSort.PriceDesc) {
+      const direction = query.sort === ProductSort.PriceAsc ? 1 : -1;
+      rawItems.sort((left, right) => {
+        const leftPrice = this.minimumProductPrice(left, direction);
+        const rightPrice = this.minimumProductPrice(right, direction);
+        return leftPrice.comparedTo(rightPrice) * direction;
+      });
+    } else if (query.sort === ProductSort.Bestselling) {
+      const variantIds = rawItems.flatMap((product) =>
+        product.variants.map((variant) => variant.id),
+      );
+      const sales = variantIds.length
+        ? await this.prisma.orderItem.groupBy({
+            by: ['variantId'],
+            where: {
+              variantId: { in: variantIds },
+              order: {
+                paymentStatus: {
+                  in: [
+                    'PAID',
+                    'PARTIALLY_REFUNDED',
+                    'REFUNDED',
+                  ],
+                },
+              },
+            },
+            _sum: { quantity: true },
+          })
+        : [];
+      const score = new Map(
+        sales.map((row) => [row.variantId, row._sum.quantity ?? 0]),
+      );
+      rawItems.sort(
+        (left, right) =>
+          right.variants.reduce(
+            (sum, variant) => sum + (score.get(variant.id) ?? 0),
+            0,
+          ) -
+          left.variants.reduce(
+            (sum, variant) => sum + (score.get(variant.id) ?? 0),
+            0,
+          ),
+      );
+    } else if (query.sort === ProductSort.Popular) {
+      const productIds = rawItems.map((product) => product.id);
+      const [wishlist, reviews] = productIds.length
+        ? await Promise.all([
+            this.prisma.wishlistItem.groupBy({
+              by: ['productId'],
+              where: { productId: { in: productIds } },
+              _count: true,
+            }),
+            this.prisma.productReview.groupBy({
+              by: ['productId'],
+              where: {
+                productId: { in: productIds },
+                status: 'APPROVED',
+              },
+              _count: true,
+            }),
+          ])
+        : [[], []];
+      const score = new Map<string, number>();
+      for (const row of wishlist) score.set(row.productId, row._count * 2);
+      for (const row of reviews) {
+        score.set(row.productId, (score.get(row.productId) ?? 0) + row._count);
+      }
+      rawItems.sort(
+        (left, right) =>
+          (score.get(right.id) ?? 0) - (score.get(left.id) ?? 0),
+      );
+    }
+    if (specialSort) rawItems = rawItems.slice(skip, skip + query.limit);
 
+    const items = rawItems.map((product) => ({
+      ...product,
+      variants: product.variants.map((variant) => ({
+        ...variant,
+        availableStock: Math.max(
+          0,
+          (variant.inventory?.currentStock ?? 0) - (variant.inventory?.reservedStock ?? 0),
+        ),
+        inventory: undefined,
+      })),
+    }));
     return this.paginated(items, total, query.page, query.limit);
+  }
+
+  private minimumProductPrice(product: {
+    variants: Array<{ prices: Array<{ amount: Prisma.Decimal }> }>;
+  }, direction: number): Prisma.Decimal {
+    const prices = product.variants.flatMap((variant) =>
+      variant.prices.map((price) => price.amount),
+    );
+    return prices.length
+      ? prices.reduce((minimum, price) => Prisma.Decimal.min(minimum, price))
+      : new Prisma.Decimal(direction > 0 ? '999999999999999999' : '-1');
   }
 
   async findStoreProduct(slug: string, currency?: string) {
@@ -609,6 +833,7 @@ export class CatalogService {
           orderBy: { position: 'asc' },
           include: {
             prices: { where: currency ? { currency } : undefined },
+            inventory: true,
             attributeValues: {
               include: { attributeValue: { include: { attribute: true } } },
             },
@@ -633,7 +858,17 @@ export class CatalogService {
     if (!product) {
       throw this.notFound('PRODUCT_NOT_FOUND', 'Product was not found.');
     }
-    return product;
+    return {
+      ...product,
+      variants: product.variants.map((variant) => ({
+        ...variant,
+        availableStock: Math.max(
+          0,
+          (variant.inventory?.currentStock ?? 0) - (variant.inventory?.reservedStock ?? 0),
+        ),
+        inventory: undefined,
+      })),
+    };
   }
 
   listStoreCategories() {
@@ -669,6 +904,16 @@ export class CatalogService {
     query: ListProductsQueryDto,
     storeOnly: boolean,
   ): Prisma.ProductWhereInput {
+    const priceFilter =
+      query.minPrice !== undefined || query.maxPrice !== undefined
+        ? {
+            currency: query.currency,
+            amount: {
+              ...(query.minPrice !== undefined ? { gte: query.minPrice } : {}),
+              ...(query.maxPrice !== undefined ? { lte: query.maxPrice } : {}),
+            },
+          }
+        : undefined;
     return {
       status: storeOnly ? ProductStatus.ACTIVE : query.status,
       brand: query.brand ? { slug: query.brand } : undefined,
@@ -689,6 +934,16 @@ export class CatalogService {
             },
           }
         : undefined,
+      variants:
+        priceFilter || query.inStock
+          ? {
+              some: {
+                status: ProductVariantStatus.ACTIVE,
+                prices: priceFilter ? { some: priceFilter } : undefined,
+                inventory: query.inStock ? { is: { currentStock: { gt: 0 } } } : undefined,
+              },
+            }
+          : undefined,
       OR: query.search
         ? [
             { name: { contains: query.search, mode: 'insensitive' } },

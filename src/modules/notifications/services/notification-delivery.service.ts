@@ -2,8 +2,8 @@ import { ConflictException, Inject, Injectable, NotFoundException } from '@nestj
 import { Notification, NotificationChannel, NotificationStatus, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { SMS_PROVIDER, SmsProvider } from '../../../shared/communications/sms-provider';
 import { EMAIL_PROVIDER, EmailProvider } from '../contracts/email-provider';
-import { SMS_PROVIDER, SmsProvider } from '../contracts/sms-provider';
 import { ListNotificationsQueryDto } from '../dto/list-notifications-query.dto';
 
 export type NotificationInput = {

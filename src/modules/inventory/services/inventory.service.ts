@@ -143,8 +143,9 @@ export class InventoryService {
   }
 
   async adjustStock(variantId: string, dto: AdjustInventoryDto, staffUserId?: string) {
-    const item = await this.withOptimisticRetry(async (transaction) => {
+    const outcome = await this.withOptimisticRetry(async (transaction) => {
       const current = await this.requireInventoryInTransaction(transaction, variantId);
+      const previousAvailableStock = calculateAvailableStock(current);
       const resultingCurrentStock = current.currentStock + dto.quantityDelta;
       const resultingState = {
         currentStock: resultingCurrentStock,
@@ -177,11 +178,25 @@ export class InventoryService {
           metadata: dto.reference ? { reference: dto.reference } : undefined,
         },
       });
-      return transaction.inventoryItem.findUniqueOrThrow({ where: { id: current.id } });
+      const item = await transaction.inventoryItem.findUniqueOrThrow({ where: { id: current.id } });
+      return { item, previousAvailableStock };
     });
 
-    this.publishIfLow(item);
-    return this.toInventorySummary(item);
+    this.publishIfLow(outcome.item);
+    if (
+      outcome.previousAvailableStock <= 0 &&
+      calculateAvailableStock(outcome.item) > 0
+    ) {
+      this.eventPublisher.publish({
+        name: 'InventoryRestocked',
+        occurredAt: new Date(),
+        eventId: `${outcome.item.id}:${outcome.item.version}:restocked`,
+        inventoryItemId: outcome.item.id,
+        variantId: outcome.item.variantId,
+        availableStock: calculateAvailableStock(outcome.item),
+      });
+    }
+    return this.toInventorySummary(outcome.item);
   }
 
   async reserveStock(dto: CreateStockReservationDto) {

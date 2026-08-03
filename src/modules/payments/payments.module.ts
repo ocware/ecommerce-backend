@@ -10,6 +10,7 @@ import { StorePaymentsController } from './controllers/store-payments.controller
 import { CashOnDeliveryGateway } from './gateways/cash-on-delivery.gateway';
 import { DevelopmentPaymentGateway } from './gateways/development-payment.gateway';
 import { ManualBankTransferGateway } from './gateways/manual-bank-transfer.gateway';
+import { ZarinpalPaymentGateway } from './gateways/zarinpal-payment.gateway';
 import { PaymentEventPublisher } from './services/payment-event-publisher.service';
 import { PaymentGatewayRegistry } from './services/payment-gateway-registry.service';
 import { PaymentsService } from './services/payments.service';
@@ -29,6 +30,7 @@ import { PaymentsService } from './services/payments.service';
     DevelopmentPaymentGateway,
     ManualBankTransferGateway,
     CashOnDeliveryGateway,
+    ZarinpalPaymentGateway,
   ],
   exports: [PaymentsService, PaymentEventPublisher, PaymentGatewayRegistry],
 })

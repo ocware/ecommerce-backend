@@ -8,4 +8,13 @@ export type InventoryLow = {
   lowStockThreshold: number;
 };
 
-export type InventoryDomainEvent = InventoryLow;
+export type InventoryRestocked = {
+  name: 'InventoryRestocked';
+  occurredAt: Date;
+  eventId: string;
+  inventoryItemId: string;
+  variantId: string;
+  availableStock: number;
+};
+
+export type InventoryDomainEvent = InventoryLow | InventoryRestocked;

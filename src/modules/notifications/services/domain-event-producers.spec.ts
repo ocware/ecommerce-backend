@@ -62,7 +62,7 @@ describe('notification domain event producers', () => {
     const customer = {
       id: 'customer-id',
       email: 'customer@example.test',
-      phone: '+12025550123',
+      phone: '+989121234567',
       name: 'Customer',
       status: CustomerStatus.ACTIVE,
       marketingConsent: false,
@@ -70,6 +70,7 @@ describe('notification domain event producers', () => {
     const prisma = {
       customer: {
         findUnique: jest.fn(() => null),
+        findFirst: jest.fn(() => null),
         create: jest.fn(() => customer),
       },
       customerSession: { create: jest.fn(() => ({ id: 'session-id' })) },
@@ -89,6 +90,8 @@ describe('notification domain event producers', () => {
       password as unknown as CustomerPasswordService,
       tokens as unknown as CustomerTokenService,
       events as unknown as CustomerEventPublisher,
+      { get: jest.fn() } as never,
+      { send: jest.fn() } as never,
     );
 
     await service.register({

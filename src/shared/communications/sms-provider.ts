@@ -1,5 +1,3 @@
-import { ProviderDeliveryResult } from './email-provider';
-
 export const SMS_PROVIDER = Symbol('SMS_PROVIDER');
 
 export type SendSmsInput = {
@@ -7,7 +5,11 @@ export type SendSmsInput = {
   message: string;
 };
 
+export type SmsDeliveryResult = {
+  messageId: string;
+};
+
 export interface SmsProvider {
   readonly name: string;
-  send(input: SendSmsInput): Promise<ProviderDeliveryResult>;
+  send(input: SendSmsInput): Promise<SmsDeliveryResult>;
 }

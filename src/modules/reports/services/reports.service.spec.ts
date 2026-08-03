@@ -55,7 +55,7 @@ describe('ReportsService', () => {
     });
   });
 
-  it('groups paid sales into a complete UTC daily series', async () => {
+  it('groups paid sales into a complete Tehran daily series', async () => {
     prisma.order.findMany.mockReturnValueOnce([
       { createdAt: new Date('2026-07-01T10:00:00.000Z'), grandTotal: new Prisma.Decimal('25') },
       { createdAt: new Date('2026-07-01T15:00:00.000Z'), grandTotal: new Prisma.Decimal('15') },
@@ -64,11 +64,12 @@ describe('ReportsService', () => {
 
     const result = await service.getSalesByDate(range);
 
-    expect(result.timezone).toBe('UTC');
+    expect(result.timezone).toBe('Asia/Tehran');
     expect(result.points).toEqual([
       { date: '2026-07-01', orderCount: 2, grossSales: '40.00' },
       { date: '2026-07-02', orderCount: 0, grossSales: '0.00' },
       { date: '2026-07-03', orderCount: 1, grossSales: '10.00' },
+      { date: '2026-07-04', orderCount: 0, grossSales: '0.00' },
     ]);
   });
 

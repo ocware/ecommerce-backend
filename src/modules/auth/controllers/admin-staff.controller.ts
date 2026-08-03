@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentStaff } from '../decorators/current-staff.decorator';
 import { RequirePermissions } from '../decorators/permissions.decorator';
 import { CreateStaffUserDto } from '../dto/create-staff-user.dto';
+import { UpdateStaffUserDto } from '../dto/update-staff-user.dto';
 import { StaffAuthGuard } from '../guards/staff-auth.guard';
 import { PermissionsGuard } from '../guards/permissions.guard';
 import { Permission } from '../permissions/permission';
@@ -36,5 +37,15 @@ export class AdminStaffController {
   @RequirePermissions(Permission.ManageStaff)
   createStaffUser(@Body() dto: CreateStaffUserDto, @CurrentStaff() staff: AuthenticatedStaff) {
     return this.authService.createStaffUser(dto, staff);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(Permission.ManageStaff)
+  updateStaffUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateStaffUserDto,
+    @CurrentStaff() staff: AuthenticatedStaff,
+  ) {
+    return this.authService.updateStaffUser(id, dto, staff);
   }
 }

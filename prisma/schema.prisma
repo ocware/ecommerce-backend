@@ -125,6 +125,58 @@ enum OrderRefundStatus {
   FAILED
 }
 
+enum ReturnRequestType {
+  RETURN
+  EXCHANGE
+}
+
+enum ReturnRequestStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUNDED
+  REPLACEMENT_CREATED
+  CLOSED
+  CANCELLED
+}
+
+enum ProductReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CustomerNotificationType {
+  ORDER_PLACED
+  ORDER_STATUS
+  BACK_IN_STOCK
+  ACCOUNT
+}
+
+enum CmsPageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ConsentSource {
+  COOKIE_BANNER
+  ACCOUNT
+  CHECKOUT
+  ADMIN
+}
+
+enum AnalyticsEventName {
+  PAGE_VIEW
+  VIEW_ITEM
+  ADD_TO_CART
+  BEGIN_CHECKOUT
+  PURCHASE
+  SEARCH
+  SIGN_UP
+  LOGIN
+}
+
 enum PaymentAttemptStatus {
   CREATED
   PENDING
@@ -274,7 +326,7 @@ model AuditLog {
 model Customer {
   id               String         @id @default(uuid()) @db.Uuid
   email            String?        @unique
-  phone            String?
+  phone            String?        @unique
   name             String
   passwordHash     String?
   status           CustomerStatus @default(ACTIVE)
@@ -291,9 +343,50 @@ model Customer {
   discountRestrictions DiscountCustomer[]
   discountRedemptions  DiscountRedemption[]
   orders               Order[]
+  otpChallenges        CustomerOtpChallenge[]
+  returnRequests       ReturnRequest[]
+  productReviews       ProductReview[]
+  wishlistItems        WishlistItem[]
+  stockSubscriptions   BackInStockSubscription[]
+  notifications        CustomerNotification[]
+  consentRecords       ConsentRecord[]
+  analyticsEvents      AnalyticsEvent[]
+  passwordResetTokens  CustomerPasswordResetToken[]
 
   @@index([status])
-  @@index([phone])
+}
+
+model CustomerPasswordResetToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  customerId String    @db.Uuid
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([expiresAt])
+}
+
+model CustomerOtpChallenge {
+  id                    String    @id @default(uuid()) @db.Uuid
+  customerId            String?   @db.Uuid
+  phone                 String
+  codeHash              String
+  attempts              Int       @default(0)
+  expiresAt             DateTime
+  verifiedAt            DateTime?
+  registrationTokenHash String?   @unique
+  registrationExpiresAt DateTime?
+  consumedAt            DateTime?
+  requestedAt           DateTime  @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([phone, requestedAt])
+  @@index([expiresAt])
 }
 
 model CustomerSession {
@@ -427,6 +520,8 @@ model Product {
   relatedProducts      RelatedProduct[]        @relation("ProductRelations")
   relatedToProducts    RelatedProduct[]        @relation("RelatedToProductRelations")
   discountRestrictions DiscountProduct[]
+  reviews              ProductReview[]
+  wishlistItems        WishlistItem[]
 
   @@index([brandId])
   @@index([status, publishedAt])
@@ -445,12 +540,13 @@ model ProductVariant {
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
 
-  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
-  prices          ProductPrice[]
-  images          ProductImage[]
-  attributeValues VariantAttributeValue[]
-  inventory       InventoryItem?
-  cartItems       CartItem[]
+  product            Product                   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  prices             ProductPrice[]
+  images             ProductImage[]
+  attributeValues    VariantAttributeValue[]
+  inventory          InventoryItem?
+  cartItems          CartItem[]
+  stockSubscriptions BackInStockSubscription[]
 
   @@index([productId, status])
   @@index([productId, position])
@@ -607,6 +703,8 @@ model Order {
   paymentRefunds  PaymentRefund[]
   shippingMethod  ShippingMethod?     @relation(fields: [shippingMethodId], references: [id], onDelete: SetNull)
   shipments       Shipment[]
+  returnRequests  ReturnRequest[]     @relation("OriginalOrderReturns")
+  replacementFor  ReturnRequest[]     @relation("ReplacementOrderReturns")
 
   @@index([customerId, createdAt])
   @@index([status, createdAt])
@@ -633,11 +731,214 @@ model OrderItem {
   lineTotal              Decimal  @db.Decimal(18, 2)
   createdAt              DateTime @default(now())
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  returnItems ReturnRequestItem[]
 
   @@index([orderId])
   @@index([variantId])
   @@index([sku])
+}
+
+model ReturnRequest {
+  id                 String              @id @default(uuid()) @db.Uuid
+  orderId            String              @db.Uuid
+  customerId         String              @db.Uuid
+  type               ReturnRequestType
+  status             ReturnRequestStatus @default(REQUESTED)
+  reason             String
+  customerNote       String?
+  adminNote          String?
+  replacementOrderId String?             @unique @db.Uuid
+  reviewedByStaffId  String?             @db.Uuid
+  reviewedAt         DateTime?
+  receivedAt         DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  order            Order               @relation("OriginalOrderReturns", fields: [orderId], references: [id], onDelete: Restrict)
+  replacementOrder Order?              @relation("ReplacementOrderReturns", fields: [replacementOrderId], references: [id], onDelete: SetNull)
+  customer         Customer            @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items            ReturnRequestItem[]
+
+  @@index([customerId, createdAt])
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
+  @@index([type, status])
+}
+
+model ReturnRequestItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  returnRequestId String   @db.Uuid
+  orderItemId     String   @db.Uuid
+  quantity        Int
+  reason          String?
+  createdAt       DateTime @default(now())
+
+  returnRequest ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItem     OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  @@unique([returnRequestId, orderItemId])
+  @@index([orderItemId])
+}
+
+model ProductReview {
+  id                 String              @id @default(uuid()) @db.Uuid
+  productId          String              @db.Uuid
+  customerId         String              @db.Uuid
+  rating             Int
+  title              String?
+  body               String
+  status             ProductReviewStatus @default(PENDING)
+  verifiedPurchase   Boolean             @default(false)
+  moderatedByStaffId String?             @db.Uuid
+  moderatedAt        DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, customerId])
+  @@index([productId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([customerId, createdAt])
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @db.Uuid
+  productId  String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId])
+  @@index([customerId, createdAt])
+  @@index([productId])
+}
+
+model BackInStockSubscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  customerId String    @db.Uuid
+  variantId  String    @db.Uuid
+  isActive   Boolean   @default(true)
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, variantId])
+  @@index([variantId, isActive])
+  @@index([customerId, createdAt])
+}
+
+model CustomerNotification {
+  id         String                   @id @default(uuid()) @db.Uuid
+  customerId String                   @db.Uuid
+  type       CustomerNotificationType
+  eventName  String
+  eventId    String
+  title      String
+  body       String
+  href       String?
+  readAt     DateTime?
+  createdAt  DateTime                 @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, eventName, eventId])
+  @@index([customerId, readAt, createdAt])
+}
+
+model CmsHome {
+  id                    String   @id @default("default")
+  heroTitle             String
+  heroSubtitle          String?
+  featuredProductIds    Json
+  featuredCategorySlugs Json
+  promoTitle            String?
+  promoBody             String?
+  promoLinkUrl          String?
+  updatedByStaffUserId  String?  @db.Uuid
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  slides CmsHomeSlide[]
+}
+
+model CmsHomeSlide {
+  id                   String   @id @default(uuid()) @db.Uuid
+  homeId               String   @default("default")
+  title                String
+  subtitle             String?
+  imageUrl             String
+  linkUrl              String?
+  position             Int      @default(0)
+  isActive             Boolean  @default(true)
+  updatedByStaffUserId String?  @db.Uuid
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  home CmsHome @relation(fields: [homeId], references: [id], onDelete: Cascade)
+
+  @@index([homeId, isActive, position])
+}
+
+model CmsPage {
+  id                   String        @id @default(uuid()) @db.Uuid
+  slug                 String        @unique
+  title                String
+  bodyMarkdown         String
+  seoTitle             String?
+  seoDescription       String?
+  status               CmsPageStatus @default(DRAFT)
+  updatedByStaffUserId String?       @db.Uuid
+  publishedAt          DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([status, updatedAt])
+}
+
+model ConsentRecord {
+  id               String        @id @default(uuid()) @db.Uuid
+  customerId       String?       @db.Uuid
+  anonymousId      String
+  analyticsGranted Boolean
+  marketingGranted Boolean
+  policyVersion    String
+  source           ConsentSource
+  createdAt        DateTime      @default(now())
+
+  customer        Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([anonymousId, createdAt])
+  @@index([customerId, createdAt])
+}
+
+model AnalyticsEvent {
+  id              String             @id @default(uuid()) @db.Uuid
+  customerId      String?            @db.Uuid
+  consentRecordId String?            @db.Uuid
+  anonymousId     String
+  sessionId       String
+  name            AnalyticsEventName
+  dedupeKey       String             @unique
+  payload         Json
+  occurredAt      DateTime
+  createdAt       DateTime           @default(now())
+
+  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  consentRecord ConsentRecord? @relation(fields: [consentRecordId], references: [id], onDelete: SetNull)
+
+  @@index([name, occurredAt])
+  @@index([anonymousId, occurredAt])
+  @@index([customerId, occurredAt])
 }
 
 model OrderInternalNote {
@@ -1001,6 +1302,11 @@ model Notification {
 model ShopSettings {
   id                      String   @id @default("default")
   shopName                String
+  shopActive              Boolean  @default(true)
+  contactPhone            String?
+  contactEmail            String?
+  address                 String?
+  footerText              String?
   currency                String   @db.VarChar(3)
   taxEnabled              Boolean  @default(false)
   taxRate                 Decimal  @default(0) @db.Decimal(7, 4)
@@ -1008,6 +1314,8 @@ model ShopSettings {
   orderPrefix             String   @default("ORD") @db.VarChar(12)
   lowStockThreshold       Int      @default(0)
   guestCheckoutEnabled    Boolean  @default(true)
+  returnsEnabled          Boolean  @default(true)
+  returnWindowDays        Int      @default(7)
   version                 Int      @default(0)
   updatedByStaffUserId    String?  @db.Uuid
   createdAt               DateTime @default(now())

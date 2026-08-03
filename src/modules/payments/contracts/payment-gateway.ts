@@ -2,6 +2,7 @@ export enum PaymentGatewayName {
   DEVELOPMENT = 'DEVELOPMENT',
   MANUAL_BANK_TRANSFER = 'MANUAL_BANK_TRANSFER',
   CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
+  ZARINPAL = 'ZARINPAL',
 }
 
 export type GatewayPaymentState = 'PENDING' | 'AUTHORIZED' | 'SUCCEEDED' | 'FAILED';

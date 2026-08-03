@@ -47,6 +47,10 @@ describe('reusable deployment seed', () => {
     });
     expect(database.shopSettings.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
+        update: expect.objectContaining({
+          shopName: 'Reusable Store',
+          currency: 'USD',
+        }) as Record<string, unknown>,
         create: expect.objectContaining({
           currency: 'USD',
           defaultShippingMethodId: standard.id,
