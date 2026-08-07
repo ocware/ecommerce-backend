@@ -10,8 +10,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CustomerSessionStatus, CustomerStatus, Prisma } from '@prisma/client';
-import { randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 
+import {
+  ACCESS_TOKEN_TTL_SECONDS,
+  isSessionIdle,
+  sessionIdleExpiresAt,
+  shouldTouchSessionActivity,
+} from '../../../common/session-ttl';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { SMS_PROVIDER, SmsProvider } from '../../../shared/communications/sms-provider';
 import { AuthenticatedStaff } from '../../auth/types/authenticated-staff';
@@ -54,7 +60,7 @@ type SerializedCustomer = {
 
 @Injectable()
 export class CustomersService {
-  private readonly accessTokenExpiresInSeconds = 15 * 60;
+  private readonly accessTokenExpiresInSeconds = ACCESS_TOKEN_TTL_SECONDS;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -212,6 +218,7 @@ export class CustomersService {
         data: {
           status: CustomerSessionStatus.REVOKED,
           revokedAt: now,
+          previousRefreshTokenHash: null,
         },
       }),
     ]);
@@ -409,7 +416,9 @@ export class CustomersService {
 
   async refresh(dto: RefreshCustomerTokenDto): Promise<CustomerAuthResponse> {
     const tokenHash = this.tokenService.hashOpaqueToken(dto.refreshToken);
-    const session = await this.prisma.customerSession.findUnique({
+    const now = new Date();
+
+    const currentSession = await this.prisma.customerSession.findUnique({
       where: {
         refreshTokenHash: tokenHash,
       },
@@ -418,36 +427,77 @@ export class CustomersService {
       },
     });
 
-    if (
-      !session ||
-      session.status !== CustomerSessionStatus.ACTIVE ||
-      session.expiresAt <= new Date()
-    ) {
-      throw new UnauthorizedException({
-        code: 'INVALID_CUSTOMER_REFRESH_TOKEN',
-        message: 'The refresh token is invalid or expired.',
+    if (currentSession) {
+      if (
+        currentSession.status !== CustomerSessionStatus.ACTIVE ||
+        currentSession.expiresAt <= now
+      ) {
+        throw new UnauthorizedException({
+          code: 'INVALID_CUSTOMER_REFRESH_TOKEN',
+          message: 'The refresh token is invalid or expired.',
+        });
+      }
+
+      if (isSessionIdle(currentSession.lastActiveAt, now)) {
+        await this.prisma.customerSession.update({
+          where: { id: currentSession.id },
+          data: {
+            status: CustomerSessionStatus.EXPIRED,
+            revokedAt: now,
+            previousRefreshTokenHash: null,
+          },
+        });
+        throw new UnauthorizedException({
+          code: 'SESSION_IDLE_EXPIRED',
+          message: 'The session expired due to inactivity.',
+        });
+      }
+
+      if (currentSession.customer.status !== CustomerStatus.ACTIVE) {
+        throw new ForbiddenException({
+          code: 'CUSTOMER_ACCOUNT_NOT_ACTIVE',
+          message: 'This customer account is not active.',
+        });
+      }
+
+      const refreshToken = this.tokenService.createRefreshToken();
+      await this.prisma.customerSession.update({
+        where: {
+          id: currentSession.id,
+        },
+        data: {
+          previousRefreshTokenHash: currentSession.refreshTokenHash,
+          refreshTokenHash: refreshToken.tokenHash,
+          expiresAt: refreshToken.expiresAt,
+          lastActiveAt: now,
+        },
       });
+
+      return this.serializeAuthResponse(
+        currentSession.customer,
+        currentSession.id,
+        refreshToken.token,
+      );
     }
 
-    if (session.customer.status !== CustomerStatus.ACTIVE) {
-      throw new ForbiddenException({
-        code: 'CUSTOMER_ACCOUNT_NOT_ACTIVE',
-        message: 'This customer account is not active.',
-      });
-    }
-
-    const refreshToken = this.tokenService.createRefreshToken();
-    await this.prisma.customerSession.update({
+    const reusedSession = await this.prisma.customerSession.findUnique({
       where: {
-        id: session.id,
-      },
-      data: {
-        refreshTokenHash: refreshToken.tokenHash,
-        expiresAt: refreshToken.expiresAt,
+        previousRefreshTokenHash: tokenHash,
       },
     });
 
-    return this.serializeAuthResponse(session.customer, session.id, refreshToken.token);
+    if (reusedSession) {
+      await this.revokeAllCustomerSessions(reusedSession.customerId);
+      throw new UnauthorizedException({
+        code: 'REFRESH_TOKEN_REUSE_DETECTED',
+        message: 'Refresh token reuse was detected. All sessions were revoked.',
+      });
+    }
+
+    throw new UnauthorizedException({
+      code: 'INVALID_CUSTOMER_REFRESH_TOKEN',
+      message: 'The refresh token is invalid or expired.',
+    });
   }
 
   async logout(
@@ -471,6 +521,7 @@ export class CustomersService {
       data: {
         status: CustomerSessionStatus.REVOKED,
         revokedAt: new Date(),
+        previousRefreshTokenHash: null,
       },
     });
 
@@ -489,16 +540,43 @@ export class CustomersService {
       },
     });
 
+    const now = new Date();
+
     if (
       !session ||
       session.customerId !== customerId ||
       session.status !== CustomerSessionStatus.ACTIVE ||
-      session.expiresAt <= new Date() ||
+      session.expiresAt <= now ||
       session.customer.status !== CustomerStatus.ACTIVE
     ) {
       throw new UnauthorizedException({
         code: 'INVALID_CUSTOMER_SESSION',
         message: 'The customer session is invalid or expired.',
+      });
+    }
+
+    if (isSessionIdle(session.lastActiveAt, now)) {
+      await this.prisma.customerSession.update({
+        where: { id: session.id },
+        data: {
+          status: CustomerSessionStatus.EXPIRED,
+          revokedAt: now,
+          previousRefreshTokenHash: null,
+        },
+      });
+      throw new UnauthorizedException({
+        code: 'SESSION_IDLE_EXPIRED',
+        message: 'The session expired due to inactivity.',
+      });
+    }
+
+    if (shouldTouchSessionActivity(session.lastActiveAt, now)) {
+      await this.prisma.customerSession.update({
+        where: { id: session.id },
+        data: {
+          lastActiveAt: now,
+          expiresAt: sessionIdleExpiresAt(now),
+        },
       });
     }
 
@@ -770,16 +848,34 @@ export class CustomersService {
     status: CustomerStatus;
     marketingConsent: boolean;
   }): Promise<CustomerAuthResponse> {
+    const now = new Date();
     const refreshToken = this.tokenService.createRefreshToken();
     const session = await this.prisma.customerSession.create({
       data: {
         customerId: customer.id,
+        familyId: randomUUID(),
         refreshTokenHash: refreshToken.tokenHash,
+        previousRefreshTokenHash: null,
         expiresAt: refreshToken.expiresAt,
+        lastActiveAt: now,
       },
     });
 
     return this.serializeAuthResponse(customer, session.id, refreshToken.token);
+  }
+
+  private async revokeAllCustomerSessions(customerId: string): Promise<void> {
+    await this.prisma.customerSession.updateMany({
+      where: {
+        customerId,
+        status: CustomerSessionStatus.ACTIVE,
+      },
+      data: {
+        status: CustomerSessionStatus.REVOKED,
+        revokedAt: new Date(),
+        previousRefreshTokenHash: null,
+      },
+    });
   }
 
   private otpHash(phone: string, code: string): string {

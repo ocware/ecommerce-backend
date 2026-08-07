@@ -2,12 +2,14 @@ import { ProductStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -29,6 +31,11 @@ export class CreateProductDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsObject()
+  details?: Record<string, unknown>;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(500)
   shortDescription?: string;
@@ -38,10 +45,11 @@ export class CreateProductDto {
   @IsEnum(ProductStatus)
   status?: ProductStatus;
 
-  @ApiProperty({ required: false, format: 'uuid' })
+  @ApiProperty({ required: false, format: 'uuid', nullable: true })
   @IsOptional()
+  @ValidateIf((_, value) => value != null)
   @IsUUID()
-  brandId?: string;
+  brandId?: string | null;
 
   @ApiProperty({ required: false })
   @IsOptional()

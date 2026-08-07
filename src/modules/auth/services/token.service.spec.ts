@@ -25,11 +25,15 @@ describe('TokenService', () => {
     });
   });
 
-  it('creates hashable opaque refresh tokens', () => {
+  it('creates hashable opaque refresh tokens with 7-day idle expiry', () => {
+    const before = Date.now();
     const refreshToken = service.createRefreshToken();
+    const after = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
     expect(refreshToken.token.length).toBeGreaterThan(32);
     expect(refreshToken.tokenHash).toBe(service.hashOpaqueToken(refreshToken.token));
-    expect(refreshToken.expiresAt.getTime()).toBeGreaterThan(Date.now());
+    expect(refreshToken.expiresAt.getTime()).toBeGreaterThanOrEqual(before + sevenDays - 1000);
+    expect(refreshToken.expiresAt.getTime()).toBeLessThanOrEqual(after + sevenDays + 1000);
   });
 });

@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
@@ -91,6 +102,14 @@ export class AdminCatalogController {
   @Post('products/:id/images')
   createImage(@Param('id') id: string, @Body() dto: CreateProductImageDto) {
     return this.catalogService.createImage(id, dto);
+  }
+
+  @Delete('products/:productId/images/:imageId')
+  deleteImage(
+    @Param('productId') productId: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.catalogService.deleteProductImage(productId, imageId);
   }
 
   @Put('products/:id/categories')

@@ -20,6 +20,7 @@ import { UpdateBannerDto } from '../dto/update-banner.dto';
 import { UploadBannerDto } from '../dto/upload-banner.dto';
 import { UploadCategoryImageDto } from '../dto/upload-category-image.dto';
 import { UploadProductImageDto } from '../dto/upload-product-image.dto';
+import { UploadLibraryDto } from '../dto/upload-library.dto';
 import { UploadShopLogoDto } from '../dto/upload-shop-logo.dto';
 import { MediaVariants } from '../jobs/image-resizing.job';
 
@@ -124,6 +125,81 @@ export class MediaService {
       staffUserId,
     );
     await this.replaceAssets(MediaAssetType.SHOP_LOGO, undefined, asset);
+    return asset;
+  }
+
+  async uploadLibraryAsset(dto: UploadLibraryDto, file: UploadedImage, staffUserId: string) {
+    return this.createAsset(
+      { type: MediaAssetType.LIBRARY, altText: dto.altText },
+      file,
+      staffUserId,
+    );
+  }
+
+  /**
+   * Makes an existing asset the active shop logo.
+   * SHOP_LOGO assets are promoted in place; other types are cloned (new storage key).
+   */
+  async promoteShopLogo(assetId: string, staffUserId: string) {
+    const source = await this.requireAsset(assetId);
+    if (source.status === MediaAssetStatus.DELETED) {
+      throw this.notFound();
+    }
+
+    if (source.type === MediaAssetType.SHOP_LOGO) {
+      await this.replaceAssets(MediaAssetType.SHOP_LOGO, undefined, source);
+      return this.prisma.mediaAsset.update({
+        where: { id: source.id },
+        data: { isActive: true },
+      });
+    }
+
+    const body = await this.storage.read(source.originalKey);
+    const extension = source.originalFilename.includes('.')
+      ? source.originalFilename.split('.').pop()!
+      : source.mimeType.split('/')[1] || 'bin';
+    const originalKey = `${this.typePath(MediaAssetType.SHOP_LOGO)}/${randomUUID()}/original.${extension}`;
+    const stored = await this.storage.upload({
+      key: originalKey,
+      body,
+      contentType: source.mimeType,
+      cacheControl: 'public, max-age=31536000, immutable',
+    });
+
+    let asset: MediaAsset;
+    try {
+      asset = await this.prisma.mediaAsset.create({
+        data: {
+          type: MediaAssetType.SHOP_LOGO,
+          status: source.status === MediaAssetStatus.READY
+            ? MediaAssetStatus.READY
+            : MediaAssetStatus.PROCESSING,
+          altText: source.altText,
+          position: 0,
+          isActive: true,
+          storageProvider: this.storage.name,
+          originalKey: stored.key,
+          originalUrl: stored.url,
+          originalFilename: source.originalFilename,
+          mimeType: source.mimeType,
+          sizeBytes: source.sizeBytes,
+          width: source.width,
+          height: source.height,
+          variants: source.variants ?? undefined,
+          createdByStaffUserId: staffUserId,
+        },
+      });
+    } catch (error) {
+      await this.storage.delete(stored.key);
+      throw error;
+    }
+
+    await this.replaceAssets(MediaAssetType.SHOP_LOGO, undefined, asset);
+    if (asset.status === MediaAssetStatus.PROCESSING) {
+      await this.backgroundJobs.add(BackgroundJobName.IMAGE_PROCESSING, {
+        mediaAssetId: asset.id,
+      });
+    }
     return asset;
   }
 

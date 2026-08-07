@@ -103,4 +103,14 @@ export class UpdateShopSettingsDto {
   @Min(1)
   @Max(365)
   returnWindowDays?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  onlinePaymentEnabled?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  codPaymentEnabled?: boolean;
 }

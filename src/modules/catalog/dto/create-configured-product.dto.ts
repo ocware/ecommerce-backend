@@ -66,6 +66,11 @@ export class CreateConfiguredProductDto {
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  @IsOptional()
+  @IsObject()
+  details?: Record<string, unknown>;
+
   @ApiProperty({ enum: ProductStatus })
   @IsEnum(ProductStatus)
   status!: ProductStatus;

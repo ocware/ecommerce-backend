@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ShopSettings" ADD COLUMN IF NOT EXISTS "onlinePaymentEnabled" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "ShopSettings" ADD COLUMN IF NOT EXISTS "codPaymentEnabled" BOOLEAN NOT NULL DEFAULT true;

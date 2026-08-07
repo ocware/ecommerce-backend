@@ -2,6 +2,10 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
+import {
+  ACCESS_TOKEN_TTL_SECONDS,
+  sessionIdleExpiresAt,
+} from '../../../common/session-ttl';
 import { AccessTokenPayload } from '../types/token-payload';
 
 type JwtHeader = {
@@ -11,8 +15,7 @@ type JwtHeader = {
 
 @Injectable()
 export class TokenService {
-  private readonly accessTokenTtlSeconds = 15 * 60;
-  private readonly refreshTokenTtlDays = 30;
+  readonly accessTokenTtlSeconds = ACCESS_TOKEN_TTL_SECONDS;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -76,12 +79,11 @@ export class TokenService {
   createRefreshToken(): { token: string; tokenHash: string; expiresAt: Date } {
     const token = randomBytes(48).toString('base64url');
     const tokenHash = this.hashOpaqueToken(token);
-    const expiresAt = new Date(Date.now() + this.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
 
     return {
       token,
       tokenHash,
-      expiresAt,
+      expiresAt: sessionIdleExpiresAt(),
     };
   }
 

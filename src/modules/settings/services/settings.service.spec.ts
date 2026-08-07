@@ -23,6 +23,8 @@ describe('SettingsService', () => {
     guestCheckoutEnabled: true,
     returnsEnabled: true,
     returnWindowDays: 7,
+    onlinePaymentEnabled: true,
+    codPaymentEnabled: true,
     version: 0,
     updatedByStaffUserId: null,
     createdAt: new Date(),
@@ -74,6 +76,8 @@ describe('SettingsService', () => {
       guestCheckoutEnabled: true,
       returnsEnabled: true,
       returnWindowDays: 7,
+      onlinePaymentEnabled: true,
+      codPaymentEnabled: true,
     });
   });
 
@@ -90,6 +94,8 @@ describe('SettingsService', () => {
         orderPrefix: 'NW',
         lowStockThreshold: 5,
         guestCheckoutEnabled: false,
+        onlinePaymentEnabled: true,
+        codPaymentEnabled: false,
       },
       'staff-id',
     );
@@ -103,10 +109,22 @@ describe('SettingsService', () => {
         orderPrefix: 'NW',
         lowStockThreshold: 5,
         guestCheckoutEnabled: false,
+        onlinePaymentEnabled: true,
+        codPaymentEnabled: false,
         updatedByStaffUserId: 'staff-id',
       }) as Record<string, unknown>,
     });
     expect(result.taxRate).toBe('8.2500');
+  });
+
+  it('rejects disabling every payment method', async () => {
+    await expect(
+      service.update(
+        { onlinePaymentEnabled: false, codPaymentEnabled: false },
+        'staff-id',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.shopSettings.update).not.toHaveBeenCalled();
   });
 
   it('rejects a default shipping method using another currency', async () => {

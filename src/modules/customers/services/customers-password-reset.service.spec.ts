@@ -102,6 +102,7 @@ describe('CustomersService password reset', () => {
         data: {
           status: CustomerSessionStatus.REVOKED,
           revokedAt: expect.any(Date) as Date,
+          previousRefreshTokenHash: null,
         },
       }),
     );

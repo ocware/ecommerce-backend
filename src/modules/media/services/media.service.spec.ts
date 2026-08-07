@@ -186,4 +186,42 @@ describe('MediaService', () => {
     ).rejects.toMatchObject({ response: { code: 'INVALID_BANNER_SCHEDULE' } });
     expect(storage.upload).not.toHaveBeenCalled();
   });
+
+  it('uploads unbound library assets without catalog side effects', async () => {
+    prisma.mediaAsset.create.mockImplementationOnce(() => ({
+      ...baseAsset,
+      type: MediaAssetType.LIBRARY,
+      ownerId: null,
+      catalogImageId: null,
+    }));
+
+    const result = await service.uploadLibraryAsset(
+      { altText: 'Hero' },
+      file,
+      staffUserId,
+    );
+
+    expect(result.type).toBe(MediaAssetType.LIBRARY);
+    expect(catalog.createManagedImage).not.toHaveBeenCalled();
+    expect(catalog.setManagedCategoryImage).not.toHaveBeenCalled();
+    expect(backgroundJobs.add).toHaveBeenCalledWith(BackgroundJobName.IMAGE_PROCESSING, {
+      mediaAssetId: assetId,
+    });
+  });
+
+  it('promotes an existing shop logo asset without cloning storage', async () => {
+    const logo = {
+      ...readyAsset,
+      type: MediaAssetType.SHOP_LOGO,
+      ownerId: null,
+      catalogImageId: null,
+    };
+    prisma.mediaAsset.findUnique.mockImplementationOnce(() => Promise.resolve(logo));
+    prisma.mediaAsset.findMany.mockImplementationOnce(() => []);
+
+    const result = await service.promoteShopLogo(assetId, staffUserId);
+
+    expect(storage.read).not.toHaveBeenCalled();
+    expect(result.isActive).toBe(true);
+  });
 });

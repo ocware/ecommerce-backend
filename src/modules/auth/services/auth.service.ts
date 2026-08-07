@@ -6,7 +6,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { StaffRole, StaffSessionStatus, StaffStatus as PrismaStaffStatus } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 
+import {
+  ACCESS_TOKEN_TTL_SECONDS,
+  isSessionIdle,
+  sessionIdleExpiresAt,
+  shouldTouchSessionActivity,
+} from '../../../common/session-ttl';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { ConfirmPasswordResetDto } from '../dto/confirm-password-reset.dto';
 import { CreateStaffUserDto } from '../dto/create-staff-user.dto';
@@ -41,7 +48,7 @@ type AuthResponse = {
 
 @Injectable()
 export class AuthService {
-  private readonly accessTokenExpiresInSeconds = 15 * 60;
+  private readonly accessTokenExpiresInSeconds = ACCESS_TOKEN_TTL_SECONDS;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -113,12 +120,16 @@ export class AuthService {
       });
     }
 
+    const now = new Date();
     const refreshToken = this.tokenService.createRefreshToken();
     const session = await this.prisma.staffSession.create({
       data: {
         staffUserId: staff.id,
+        familyId: randomUUID(),
         refreshTokenHash: refreshToken.tokenHash,
+        previousRefreshTokenHash: null,
         expiresAt: refreshToken.expiresAt,
+        lastActiveAt: now,
       },
     });
 
@@ -127,7 +138,7 @@ export class AuthService {
         id: staff.id,
       },
       data: {
-        lastLoginAt: new Date(),
+        lastLoginAt: now,
       },
     });
 
@@ -157,7 +168,9 @@ export class AuthService {
 
   async refresh(dto: RefreshTokenDto): Promise<AuthResponse> {
     const tokenHash = this.tokenService.hashOpaqueToken(dto.refreshToken);
-    const session = await this.prisma.staffSession.findUnique({
+    const now = new Date();
+
+    const currentSession = await this.prisma.staffSession.findUnique({
       where: {
         refreshTokenHash: tokenHash,
       },
@@ -166,55 +179,99 @@ export class AuthService {
       },
     });
 
-    if (
-      !session ||
-      session.status !== StaffSessionStatus.ACTIVE ||
-      session.expiresAt <= new Date()
-    ) {
-      throw new UnauthorizedException({
-        code: 'INVALID_REFRESH_TOKEN',
-        message: 'The refresh token is invalid or expired.',
+    if (currentSession) {
+      if (
+        currentSession.status !== StaffSessionStatus.ACTIVE ||
+        currentSession.expiresAt <= now
+      ) {
+        throw new UnauthorizedException({
+          code: 'INVALID_REFRESH_TOKEN',
+          message: 'The refresh token is invalid or expired.',
+        });
+      }
+
+      if (isSessionIdle(currentSession.lastActiveAt, now)) {
+        await this.prisma.staffSession.update({
+          where: { id: currentSession.id },
+          data: {
+            status: StaffSessionStatus.EXPIRED,
+            revokedAt: now,
+            previousRefreshTokenHash: null,
+          },
+        });
+        throw new UnauthorizedException({
+          code: 'SESSION_IDLE_EXPIRED',
+          message: 'The session expired due to inactivity.',
+        });
+      }
+
+      if (currentSession.staffUser.status !== StaffStatus.ACTIVE) {
+        throw new ForbiddenException({
+          code: 'STAFF_ACCOUNT_NOT_ACTIVE',
+          message: 'This staff account is not active.',
+        });
+      }
+
+      const refreshToken = this.tokenService.createRefreshToken();
+      const updatedSession = await this.prisma.staffSession.update({
+        where: {
+          id: currentSession.id,
+        },
+        data: {
+          previousRefreshTokenHash: currentSession.refreshTokenHash,
+          refreshTokenHash: refreshToken.tokenHash,
+          expiresAt: refreshToken.expiresAt,
+          lastActiveAt: now,
+        },
       });
+
+      await this.auditLogService.record({
+        staffUserId: currentSession.staffUserId,
+        action: 'STAFF_TOKEN_REFRESHED',
+        entityType: 'StaffSession',
+        entityId: updatedSession.id,
+      });
+
+      return {
+        staff: this.serializeStaff(currentSession.staffUser),
+        accessToken: this.tokenService.createAccessToken({
+          sub: currentSession.staffUser.id,
+          email: currentSession.staffUser.email,
+          name: currentSession.staffUser.name,
+          role: currentSession.staffUser.role,
+          sessionId: currentSession.id,
+          type: 'staff_access',
+        }),
+        refreshToken: refreshToken.token,
+        expiresIn: this.accessTokenExpiresInSeconds,
+      };
     }
 
-    if (session.staffUser.status !== StaffStatus.ACTIVE) {
-      throw new ForbiddenException({
-        code: 'STAFF_ACCOUNT_NOT_ACTIVE',
-        message: 'This staff account is not active.',
-      });
-    }
-
-    const refreshToken = this.tokenService.createRefreshToken();
-    const updatedSession = await this.prisma.staffSession.update({
+    const reusedSession = await this.prisma.staffSession.findUnique({
       where: {
-        id: session.id,
-      },
-      data: {
-        refreshTokenHash: refreshToken.tokenHash,
-        expiresAt: refreshToken.expiresAt,
+        previousRefreshTokenHash: tokenHash,
       },
     });
 
-    await this.auditLogService.record({
-      staffUserId: session.staffUserId,
-      action: 'STAFF_TOKEN_REFRESHED',
-      entityType: 'StaffSession',
-      entityId: updatedSession.id,
-    });
+    if (reusedSession) {
+      await this.revokeAllStaffSessions(reusedSession.staffUserId);
+      await this.auditLogService.record({
+        staffUserId: reusedSession.staffUserId,
+        action: 'STAFF_REFRESH_TOKEN_REUSE_DETECTED',
+        entityType: 'StaffSession',
+        entityId: reusedSession.id,
+        metadata: { familyId: reusedSession.familyId },
+      });
+      throw new UnauthorizedException({
+        code: 'REFRESH_TOKEN_REUSE_DETECTED',
+        message: 'Refresh token reuse was detected. All sessions were revoked.',
+      });
+    }
 
-    return {
-      staff: this.serializeStaff(session.staffUser),
-      accessToken: this.tokenService.createAccessToken({
-        sub: session.staffUser.id,
-        email: session.staffUser.email,
-        name: session.staffUser.name,
-        role: session.staffUser.role,
-        sessionId: session.id,
-        type: 'staff_access',
-      }),
-      refreshToken: refreshToken.token,
-      expiresIn: this.accessTokenExpiresInSeconds,
-    };
+    throw new UnauthorizedException({
+      code: 'INVALID_REFRESH_TOKEN',
+      message: 'The refresh token is invalid or expired.',
+    });
   }
 
   async logout(dto: LogoutDto, staff: AuthenticatedStaff): Promise<{ revoked: boolean }> {
@@ -235,6 +292,7 @@ export class AuthService {
       data: {
         status: StaffSessionStatus.REVOKED,
         revokedAt: new Date(),
+        previousRefreshTokenHash: null,
       },
     });
 
@@ -338,6 +396,7 @@ export class AuthService {
         data: {
           status: StaffSessionStatus.REVOKED,
           revokedAt: new Date(),
+          previousRefreshTokenHash: null,
         },
       }),
     ]);
@@ -364,16 +423,43 @@ export class AuthService {
       },
     });
 
+    const now = new Date();
+
     if (
       !session ||
       session.staffUserId !== staffId ||
       session.status !== StaffSessionStatus.ACTIVE ||
-      session.expiresAt <= new Date() ||
+      session.expiresAt <= now ||
       session.staffUser.status !== StaffStatus.ACTIVE
     ) {
       throw new UnauthorizedException({
         code: 'INVALID_SESSION',
         message: 'The staff session is invalid or expired.',
+      });
+    }
+
+    if (isSessionIdle(session.lastActiveAt, now)) {
+      await this.prisma.staffSession.update({
+        where: { id: session.id },
+        data: {
+          status: StaffSessionStatus.EXPIRED,
+          revokedAt: now,
+          previousRefreshTokenHash: null,
+        },
+      });
+      throw new UnauthorizedException({
+        code: 'SESSION_IDLE_EXPIRED',
+        message: 'The session expired due to inactivity.',
+      });
+    }
+
+    if (shouldTouchSessionActivity(session.lastActiveAt, now)) {
+      await this.prisma.staffSession.update({
+        where: { id: session.id },
+        data: {
+          lastActiveAt: now,
+          expiresAt: sessionIdleExpiresAt(now),
+        },
       });
     }
 
@@ -459,7 +545,11 @@ export class AuthService {
       ) {
         await transaction.staffSession.updateMany({
           where: { staffUserId: id, status: StaffSessionStatus.ACTIVE },
-          data: { status: StaffSessionStatus.REVOKED, revokedAt: new Date() },
+          data: {
+            status: StaffSessionStatus.REVOKED,
+            revokedAt: new Date(),
+            previousRefreshTokenHash: null,
+          },
         });
       }
       return result;
@@ -472,6 +562,20 @@ export class AuthService {
       metadata: { role: updated.role, status: updated.status },
     });
     return this.serializeAdminStaff(updated);
+  }
+
+  private async revokeAllStaffSessions(staffUserId: string): Promise<void> {
+    await this.prisma.staffSession.updateMany({
+      where: {
+        staffUserId,
+        status: StaffSessionStatus.ACTIVE,
+      },
+      data: {
+        status: StaffSessionStatus.REVOKED,
+        revokedAt: new Date(),
+        previousRefreshTokenHash: null,
+      },
+    });
   }
 
   private serializeStaff(staff: {

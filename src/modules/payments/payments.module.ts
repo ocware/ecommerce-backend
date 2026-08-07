@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
 import { OrdersModule } from '../orders/orders.module';
+import { SettingsModule } from '../settings/settings.module';
 import { AdminPaymentsController } from './controllers/admin-payments.controller';
 import { PaymentWebhooksController } from './controllers/payment-webhooks.controller';
 import { StoreGuestPaymentsController } from './controllers/store-guest-payments.controller';
@@ -16,7 +17,7 @@ import { PaymentGatewayRegistry } from './services/payment-gateway-registry.serv
 import { PaymentsService } from './services/payments.service';
 
 @Module({
-  imports: [AuthModule, CustomersModule, OrdersModule],
+  imports: [AuthModule, CustomersModule, OrdersModule, SettingsModule],
   controllers: [
     StorePaymentsController,
     StoreGuestPaymentsController,

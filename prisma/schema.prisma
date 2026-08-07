@@ -232,6 +232,7 @@ enum MediaAssetType {
   CATEGORY_IMAGE
   SHOP_LOGO
   BANNER
+  LIBRARY
 }
 
 enum MediaAssetStatus {
@@ -275,20 +276,25 @@ model StaffUser {
 }
 
 model StaffSession {
-  id               String             @id @default(uuid()) @db.Uuid
-  staffUserId      String             @db.Uuid
-  refreshTokenHash String             @unique
-  status           StaffSessionStatus @default(ACTIVE)
-  expiresAt        DateTime
-  revokedAt        DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id                       String             @id @default(uuid()) @db.Uuid
+  staffUserId              String             @db.Uuid
+  familyId                 String             @default(uuid()) @db.Uuid
+  refreshTokenHash         String             @unique
+  previousRefreshTokenHash String?            @unique
+  status                   StaffSessionStatus @default(ACTIVE)
+  expiresAt                DateTime
+  lastActiveAt             DateTime           @default(now())
+  revokedAt                DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   staffUser StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
 
   @@index([staffUserId])
+  @@index([familyId])
   @@index([status])
   @@index([expiresAt])
+  @@index([lastActiveAt])
 }
 
 model PasswordResetToken {
@@ -390,20 +396,25 @@ model CustomerOtpChallenge {
 }
 
 model CustomerSession {
-  id               String                @id @default(uuid()) @db.Uuid
-  customerId       String                @db.Uuid
-  refreshTokenHash String                @unique
-  status           CustomerSessionStatus @default(ACTIVE)
-  expiresAt        DateTime
-  revokedAt        DateTime?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  id                       String                @id @default(uuid()) @db.Uuid
+  customerId               String                @db.Uuid
+  familyId                 String                @default(uuid()) @db.Uuid
+  refreshTokenHash         String                @unique
+  previousRefreshTokenHash String?               @unique
+  status                   CustomerSessionStatus @default(ACTIVE)
+  expiresAt                DateTime
+  lastActiveAt             DateTime              @default(now())
+  revokedAt                DateTime?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId])
+  @@index([familyId])
   @@index([status])
   @@index([expiresAt])
+  @@index([lastActiveAt])
 }
 
 model CustomerAddress {
@@ -504,6 +515,9 @@ model Product {
   slug             String        @unique
   description      String?
   shortDescription String?
+  // Product-specific catalog facts (stone, dimensions, engraving, fit notes).
+  // Kept together because these facts vary by product type and are not variants.
+  details          Json?
   status           ProductStatus @default(DRAFT)
   seoTitle         String?
   seoDescription   String?
@@ -863,6 +877,9 @@ model CmsHome {
   promoTitle            String?
   promoBody             String?
   promoLinkUrl          String?
+  promoImageUrl         String?
+  promoTiles            Json     @default("[]")
+  testimonials          Json     @default("[]")
   updatedByStaffUserId  String?  @db.Uuid
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -1316,6 +1333,8 @@ model ShopSettings {
   guestCheckoutEnabled    Boolean  @default(true)
   returnsEnabled          Boolean  @default(true)
   returnWindowDays        Int      @default(7)
+  onlinePaymentEnabled    Boolean  @default(true)
+  codPaymentEnabled       Boolean  @default(true)
   version                 Int      @default(0)
   updatedByStaffUserId    String?  @db.Uuid
   createdAt               DateTime @default(now())

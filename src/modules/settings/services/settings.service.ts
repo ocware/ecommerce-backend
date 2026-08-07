@@ -17,6 +17,8 @@ const settingsDefaults = {
   guestCheckoutEnabled: true,
   returnsEnabled: true,
   returnWindowDays: 7,
+  onlinePaymentEnabled: true,
+  codPaymentEnabled: true,
 };
 
 export type StorefrontSettings = {
@@ -35,6 +37,8 @@ export type StorefrontSettings = {
   guestCheckoutEnabled: boolean;
   returnsEnabled: boolean;
   returnWindowDays: number;
+  onlinePaymentEnabled: boolean;
+  codPaymentEnabled: boolean;
 };
 
 @Injectable()
@@ -78,6 +82,22 @@ export class SettingsService {
       }
     }
 
+    const onlinePaymentEnabled =
+      dto.onlinePaymentEnabled !== undefined
+        ? dto.onlinePaymentEnabled
+        : current.onlinePaymentEnabled;
+    const codPaymentEnabled =
+      dto.codPaymentEnabled !== undefined
+        ? dto.codPaymentEnabled
+        : current.codPaymentEnabled;
+
+    if (!onlinePaymentEnabled && !codPaymentEnabled) {
+      throw new BadRequestException({
+        code: 'PAYMENT_METHODS_REQUIRED',
+        message: 'At least one payment method must remain enabled.',
+      });
+    }
+
     const updated = await this.prisma.shopSettings.update({
       where: { id: settingsId },
       data: {
@@ -96,6 +116,8 @@ export class SettingsService {
         guestCheckoutEnabled: dto.guestCheckoutEnabled,
         returnsEnabled: dto.returnsEnabled,
         returnWindowDays: dto.returnWindowDays,
+        onlinePaymentEnabled: dto.onlinePaymentEnabled,
+        codPaymentEnabled: dto.codPaymentEnabled,
         updatedByStaffUserId: staffUserId,
         version: { increment: 1 },
       },
@@ -128,6 +150,8 @@ export class SettingsService {
       guestCheckoutEnabled: settings.guestCheckoutEnabled,
       returnsEnabled: settings.returnsEnabled,
       returnWindowDays: settings.returnWindowDays,
+      onlinePaymentEnabled: settings.onlinePaymentEnabled,
+      codPaymentEnabled: settings.codPaymentEnabled,
     };
   }
 }

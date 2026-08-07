@@ -126,11 +126,20 @@ describe('PaymentsService callback idempotency', () => {
   };
   const registry = { get: jest.fn(() => gateway) };
   const eventPublisher = { publish: jest.fn() };
+  const settingsService = {
+    get: jest.fn(() =>
+      Promise.resolve({
+        onlinePaymentEnabled: true,
+        codPaymentEnabled: true,
+      }),
+    ),
+  };
   const service = new PaymentsService(
     prisma as unknown as PrismaService,
     ordersService as unknown as OrdersService,
     registry as unknown as PaymentGatewayRegistry,
     eventPublisher as unknown as PaymentEventPublisher,
+    settingsService as never,
   );
 
   beforeEach(() => {
@@ -256,11 +265,20 @@ describe('PaymentsService partial refunds', () => {
   };
   const registry = { get: jest.fn(() => gateway) };
   const eventPublisher = { publish: jest.fn() };
+  const settingsService = {
+    get: jest.fn(() =>
+      Promise.resolve({
+        onlinePaymentEnabled: true,
+        codPaymentEnabled: true,
+      }),
+    ),
+  };
   const service = new PaymentsService(
     prisma as unknown as PrismaService,
     ordersService as unknown as OrdersService,
     registry as unknown as PaymentGatewayRegistry,
     eventPublisher as unknown as PaymentEventPublisher,
+    settingsService as never,
   );
 
   it('records a partial refund transaction and updates the order refund total', async () => {

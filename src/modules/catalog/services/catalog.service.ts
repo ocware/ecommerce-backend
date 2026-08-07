@@ -34,12 +34,16 @@ const adminProductInclude = {
     },
   },
   variants: {
+    where: {
+      status: ProductVariantStatus.ACTIVE,
+    },
     orderBy: {
       position: 'asc' as const,
     },
     include: {
       prices: true,
       inventory: true,
+      images: { orderBy: { position: 'asc' as const } },
       attributeValues: {
         include: {
           attributeValue: {
@@ -96,7 +100,15 @@ export class CatalogService {
       () =>
         this.prisma.product.create({
           data: {
-            ...dto,
+            name: dto.name,
+            slug: dto.slug,
+            description: dto.description,
+            shortDescription: dto.shortDescription,
+            status: dto.status,
+            brandId: dto.brandId,
+            details: dto.details as Prisma.InputJsonValue | undefined,
+            seoTitle: dto.seoTitle,
+            seoDescription: dto.seoDescription,
             publishedAt: dto.status === ProductStatus.ACTIVE ? new Date() : undefined,
           },
           include: adminProductInclude,
@@ -120,6 +132,7 @@ export class CatalogService {
             name: dto.name.trim(),
             slug: dto.slug,
             description: dto.description?.trim(),
+            details: dto.details as Prisma.InputJsonValue | undefined,
             status: dto.status,
             brandId: dto.brandId,
             publishedAt: dto.status === ProductStatus.ACTIVE ? new Date() : undefined,
@@ -328,7 +341,15 @@ export class CatalogService {
         this.prisma.product.update({
           where: { id },
           data: {
-            ...dto,
+            ...(dto.name !== undefined ? { name: dto.name } : {}),
+            ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
+            ...(dto.description !== undefined ? { description: dto.description } : {}),
+            ...(dto.shortDescription !== undefined ? { shortDescription: dto.shortDescription } : {}),
+            ...(dto.status !== undefined ? { status: dto.status } : {}),
+            ...(dto.brandId !== undefined ? { brandId: dto.brandId } : {}),
+            ...(dto.details !== undefined ? { details: dto.details as Prisma.InputJsonValue } : {}),
+            ...(dto.seoTitle !== undefined ? { seoTitle: dto.seoTitle } : {}),
+            ...(dto.seoDescription !== undefined ? { seoDescription: dto.seoDescription } : {}),
             publishedAt: dto.status === ProductStatus.ACTIVE ? new Date() : undefined,
           },
           include: adminProductInclude,
@@ -549,6 +570,18 @@ export class CatalogService {
 
   async deleteManagedImage(imageId: string): Promise<void> {
     await this.prisma.productImage.deleteMany({ where: { id: imageId } });
+  }
+
+  async deleteProductImage(productId: string, imageId: string) {
+    await this.requireProduct(productId);
+    const image = await this.prisma.productImage.findFirst({
+      where: { id: imageId, productId },
+    });
+    if (!image) {
+      throw this.notFound('PRODUCT_IMAGE_NOT_FOUND', 'Product image was not found.');
+    }
+    await this.deleteManagedImage(imageId);
+    return { id: imageId, deleted: true };
   }
 
   async setManagedCategoryImage(categoryId: string, imageUrl: string) {
@@ -789,6 +822,15 @@ export class CatalogService {
     }
     if (specialSort) rawItems = rawItems.slice(skip, skip + query.limit);
 
+    if (query.ids?.length) {
+      const order = new Map(query.ids.map((id, index) => [id, index]));
+      rawItems.sort(
+        (left, right) =>
+          (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+          (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+      );
+    }
+
     const items = rawItems.map((product) => ({
       ...product,
       variants: product.variants.map((variant) => ({
@@ -834,6 +876,7 @@ export class CatalogService {
           include: {
             prices: { where: currency ? { currency } : undefined },
             inventory: true,
+            images: { orderBy: { position: 'asc' } },
             attributeValues: {
               include: { attributeValue: { include: { attribute: true } } },
             },
@@ -874,7 +917,10 @@ export class CatalogService {
   listStoreCategories() {
     return this.prisma.category.findMany({
       where: { isActive: true },
-      include: { children: { where: { isActive: true }, orderBy: { position: 'asc' } } },
+      include: {
+        children: { where: { isActive: true }, orderBy: { position: 'asc' } },
+        _count: { select: { products: true } },
+      },
       orderBy: [{ position: 'asc' }, { name: 'asc' }],
     });
   }
@@ -915,6 +961,7 @@ export class CatalogService {
           }
         : undefined;
     return {
+      id: query.ids?.length ? { in: query.ids } : undefined,
       status: storeOnly ? ProductStatus.ACTIVE : query.status,
       brand: query.brand ? { slug: query.brand } : undefined,
       categories: query.category

@@ -20,6 +20,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { AuthenticatedStaff } from '../../auth/types/authenticated-staff';
 import { AuthenticatedCustomer } from '../../customers/types/authenticated-customer';
 import { OrdersService, PaymentOrderView } from '../../orders/services/orders.service';
+import { SettingsService } from '../../settings/services/settings.service';
 import {
   GatewayPaymentResult,
   GatewayRefundResult,
@@ -44,6 +45,7 @@ export class PaymentsService {
     private readonly ordersService: OrdersService,
     private readonly gatewayRegistry: PaymentGatewayRegistry,
     private readonly eventPublisher: PaymentEventPublisher,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async startCustomerPayment(
@@ -183,6 +185,8 @@ export class PaymentsService {
     dto: StartPaymentDto,
     idempotencyKey: string,
   ) {
+    await this.assertPaymentMethodEnabled(dto.gateway);
+
     const existing = await this.prisma.paymentAttempt.findUnique({
       where: { idempotencyKey },
       include: attemptInclude,
@@ -742,5 +746,24 @@ export class PaymentsService {
 
   private errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'Unknown gateway error.';
+  }
+
+  private async assertPaymentMethodEnabled(gateway: PaymentGatewayName) {
+    const settings = await this.settingsService.get();
+    const isCod = gateway === PaymentGatewayName.CASH_ON_DELIVERY;
+    if (isCod && !settings.codPaymentEnabled) {
+      throw new BadRequestException({
+        code: 'PAYMENT_METHOD_DISABLED',
+        message: 'Cash on delivery is disabled for this shop.',
+        details: { gateway },
+      });
+    }
+    if (!isCod && !settings.onlinePaymentEnabled) {
+      throw new BadRequestException({
+        code: 'PAYMENT_METHOD_DISABLED',
+        message: 'Online payment is disabled for this shop.',
+        details: { gateway },
+      });
+    }
   }
 }

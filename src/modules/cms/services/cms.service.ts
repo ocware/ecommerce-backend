@@ -2,12 +2,57 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CmsPageStatus, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
-import { UpdateHomeContentDto } from '../dto/update-home-content.dto';
+import {
+  HomePromoTileDto,
+  HomeTestimonialDto,
+  UpdateHomeContentDto,
+} from '../dto/update-home-content.dto';
 import { UpsertContentPageDto } from '../dto/upsert-content-page.dto';
 import { UpsertHomeSlideDto } from '../dto/upsert-home-slide.dto';
 
 const homeId = 'default';
 const homeInclude = { slides: { orderBy: { position: 'asc' as const } } };
+
+const defaultPromoTiles: HomePromoTileDto[] = [
+  {
+    title: 'ارسال رایگان',
+    body: 'برای سفارش‌های بالای ۸۰۰ هزار تومان',
+    cta: 'شروع خرید',
+    linkUrl: '/shop',
+    imageUrl: '/images/categories/gift-sets.jpg',
+  },
+  {
+    title: 'کالکشن جدید',
+    body: 'جدیدترین انگشترهای نگین‌دار',
+    cta: 'مشاهده کالکشن',
+    linkUrl: '/shop/c/gemstone-rings',
+    imageUrl: '/images/categories/gemstone-rings.jpg',
+  },
+];
+
+const defaultTestimonials: HomeTestimonialDto[] = [
+  {
+    name: 'مریم احمدی',
+    city: 'تهران',
+    quote:
+      'انگشتر نقره‌ام فوق‌العاده بود. کیفیت ساخت و بسته‌بندی خیلی شیک بود.',
+  },
+  {
+    name: 'علی رضایی',
+    city: 'اصفهان',
+    quote: 'برای هدیه سالگرد سفارش دادم؛ به‌موقع رسید و بسیار زیبا بود.',
+  },
+  {
+    name: 'زهرا کریمی',
+    city: 'شیراز',
+    quote: 'طراحی حلقه‌هایشان بی‌نظیر است. حتماً دوباره خرید می‌کنم.',
+  },
+  {
+    name: 'حسین محمدی',
+    city: 'مشهد',
+    quote: 'اصالت نقره و عیار کاملاً مشخص بود. کیفیت عالی.',
+  },
+];
 
 @Injectable()
 export class CmsService {
@@ -23,6 +68,9 @@ export class CmsService {
 
   async updateHome(dto: UpdateHomeContentDto, staffId: string) {
     await this.getHome();
+    if (dto.featuredProductIds !== undefined) {
+      await this.requireAllProducts(dto.featuredProductIds);
+    }
     const updated = await this.prisma.cmsHome.update({
       where: { id: homeId },
       data: {
@@ -33,6 +81,22 @@ export class CmsService {
         promoTitle: dto.promoTitle?.trim(),
         promoBody: dto.promoBody?.trim(),
         promoLinkUrl: dto.promoLinkUrl?.trim(),
+        promoImageUrl:
+          dto.promoImageUrl === undefined
+            ? undefined
+            : dto.promoImageUrl.trim() || null,
+        promoTiles:
+          dto.promoTiles === undefined
+            ? undefined
+            : (this.normalizePromoTiles(
+                dto.promoTiles,
+              ) as Prisma.InputJsonValue),
+        testimonials:
+          dto.testimonials === undefined
+            ? undefined
+            : (this.normalizeTestimonials(
+                dto.testimonials,
+              ) as Prisma.InputJsonValue),
         updatedByStaffUserId: staffId,
       },
       include: homeInclude,
@@ -136,6 +200,8 @@ export class CmsService {
         heroSubtitle: 'زیورآلات نقره اصیل با ضمانت عیار',
         featuredProductIds: [],
         featuredCategorySlugs: [],
+        promoTiles: defaultPromoTiles as unknown as Prisma.InputJsonValue,
+        testimonials: defaultTestimonials as unknown as Prisma.InputJsonValue,
       },
       update: {},
       include: homeInclude,
@@ -153,6 +219,20 @@ export class CmsService {
     return slide;
   }
 
+  private async requireAllProducts(ids: string[]) {
+    if (ids.length === 0) return;
+    const uniqueIds = [...new Set(ids)];
+    const count = await this.prisma.product.count({
+      where: { id: { in: uniqueIds } },
+    });
+    if (count !== uniqueIds.length) {
+      throw new NotFoundException({
+        code: 'PRODUCT_NOT_FOUND',
+        message: 'One or more featured products were not found.',
+      });
+    }
+  }
+
   private pageNotFound() {
     return new NotFoundException({
       code: 'CMS_PAGE_NOT_FOUND',
@@ -166,10 +246,81 @@ export class CmsService {
       : [];
   }
 
+  private normalizePromoTiles(tiles: HomePromoTileDto[]) {
+    return tiles.map((tile) => ({
+      title: tile.title.trim(),
+      body: tile.body.trim(),
+      cta: tile.cta.trim(),
+      linkUrl: tile.linkUrl.trim(),
+      imageUrl: tile.imageUrl.trim(),
+    }));
+  }
+
+  private normalizeTestimonials(items: HomeTestimonialDto[]) {
+    return items.map((item) => ({
+      name: item.name.trim(),
+      city: item.city.trim(),
+      quote: item.quote.trim(),
+    }));
+  }
+
+  private parsePromoTiles(value: Prisma.JsonValue) {
+    if (!Array.isArray(value)) return [] as ReturnType<CmsService['normalizePromoTiles']>;
+    return value.flatMap((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+      const record = item as Record<string, unknown>;
+      const title = typeof record.title === 'string' ? record.title : '';
+      const body = typeof record.body === 'string' ? record.body : '';
+      const cta = typeof record.cta === 'string' ? record.cta : '';
+      const linkUrl = typeof record.linkUrl === 'string' ? record.linkUrl : '';
+      const imageUrl =
+        typeof record.imageUrl === 'string' ? record.imageUrl : '';
+      if (!title || !cta || !linkUrl || !imageUrl) return [];
+      return [{ title, body, cta, linkUrl, imageUrl }];
+    });
+  }
+
+  private parseTestimonials(value: Prisma.JsonValue) {
+    if (!Array.isArray(value))
+      return [] as ReturnType<CmsService['normalizeTestimonials']>;
+    return value.flatMap((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+      const record = item as Record<string, unknown>;
+      const name = typeof record.name === 'string' ? record.name : '';
+      const city = typeof record.city === 'string' ? record.city : '';
+      const quote = typeof record.quote === 'string' ? record.quote : '';
+      if (!name || !city || !quote) return [];
+      return [{ name, city, quote }];
+    });
+  }
+
   private serializeHome(
-    home: Awaited<ReturnType<CmsService['getHome']>>,
+    home: {
+      heroTitle: string;
+      heroSubtitle: string | null;
+      featuredProductIds: Prisma.JsonValue;
+      featuredCategorySlugs: Prisma.JsonValue;
+      promoTitle: string | null;
+      promoBody: string | null;
+      promoLinkUrl: string | null;
+      promoImageUrl: string | null;
+      promoTiles: Prisma.JsonValue;
+      testimonials: Prisma.JsonValue;
+      updatedAt: Date;
+      slides: Array<{
+        id: string;
+        title: string;
+        subtitle: string | null;
+        imageUrl: string;
+        linkUrl: string | null;
+        position: number;
+        isActive: boolean;
+      }>;
+    },
     publicOnly: boolean,
   ) {
+    const promoTiles = this.parsePromoTiles(home.promoTiles);
+    const testimonials = this.parseTestimonials(home.testimonials);
     return {
       hero_title: home.heroTitle,
       hero_subtitle: home.heroSubtitle,
@@ -183,8 +334,17 @@ export class CmsService {
             title: home.promoTitle,
             body: home.promoBody ?? '',
             link_url: home.promoLinkUrl,
+            image_url: home.promoImageUrl,
           }
         : undefined,
+      promo_tiles: promoTiles.map((tile) => ({
+        title: tile.title,
+        body: tile.body,
+        cta: tile.cta,
+        link_url: tile.linkUrl,
+        image_url: tile.imageUrl,
+      })),
+      testimonials,
       updated_at: home.updatedAt,
     };
   }

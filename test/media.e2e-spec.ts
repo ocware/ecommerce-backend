@@ -18,6 +18,8 @@ describe('Media API', () => {
     uploadProductImage: jest.fn(),
     uploadCategoryImage: jest.fn(),
     uploadShopLogo: jest.fn(),
+    uploadLibraryAsset: jest.fn(),
+    promoteShopLogo: jest.fn(),
     uploadBanner: jest.fn(),
     updateBanner: jest.fn(),
     deleteAsset: jest.fn(),
@@ -97,6 +99,56 @@ describe('Media API', () => {
       expect.objectContaining({ altText: 'Front view', position: 2 }),
       expect.objectContaining({ originalname: 'product.png' }),
       '33333333-3333-4333-8333-333333333333',
+    );
+  });
+
+  it('accepts unbound library uploads through the protected admin API', async () => {
+    mediaService.uploadLibraryAsset.mockResolvedValue({
+      id: assetId,
+      type: MediaAssetType.LIBRARY,
+      status: MediaAssetStatus.PROCESSING,
+    });
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .post('/api/v1/admin/media/library')
+      .set('Authorization', 'Bearer token')
+      .field('altText', 'Gallery asset')
+      .attach('file', Buffer.from('image-bytes'), {
+        filename: 'library.png',
+        contentType: 'image/png',
+      })
+      .expect(201)
+      .expect(({ body }: { body: { data: { id: string; type: MediaAssetType } } }) => {
+        expect(body.data.id).toBe(assetId);
+        expect(body.data.type).toBe(MediaAssetType.LIBRARY);
+      });
+
+    expect(mediaService.uploadLibraryAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ altText: 'Gallery asset' }),
+      expect.objectContaining({ originalname: 'library.png' }),
+      '33333333-3333-4333-8333-333333333333',
+    );
+  });
+
+  it('lists media filtered by type including LIBRARY', async () => {
+    mediaService.listAdmin.mockResolvedValue({
+      items: [{ id: assetId, type: MediaAssetType.LIBRARY }],
+      pagination: { page: 1, limit: 100, total: 1, pageCount: 1 },
+    });
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .get('/api/v1/admin/media')
+      .query({ type: 'LIBRARY', limit: 100 })
+      .set('Authorization', 'Bearer token')
+      .expect(200)
+      .expect(({ body }: { body: { data: { items: Array<{ type: string }> } } }) => {
+        expect(body.data.items[0].type).toBe(MediaAssetType.LIBRARY);
+      });
+
+    expect(mediaService.listAdmin).toHaveBeenCalledWith(
+      expect.objectContaining({ type: MediaAssetType.LIBRARY, limit: 100 }),
     );
   });
 

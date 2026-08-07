@@ -28,6 +28,7 @@ import { ListMediaQueryDto } from '../dto/list-media-query.dto';
 import { UpdateBannerDto } from '../dto/update-banner.dto';
 import { UploadBannerDto } from '../dto/upload-banner.dto';
 import { UploadCategoryImageDto } from '../dto/upload-category-image.dto';
+import { UploadLibraryDto } from '../dto/upload-library.dto';
 import { UploadProductImageDto } from '../dto/upload-product-image.dto';
 import { UploadShopLogoDto } from '../dto/upload-shop-logo.dto';
 import { MediaService } from '../services/media.service';
@@ -84,6 +85,27 @@ export class AdminMediaController {
     @CurrentStaff() staff: AuthenticatedStaff,
   ) {
     return this.mediaService.uploadShopLogo(dto, file, staff.id);
+  }
+
+  @Put('shop-logo/from-asset/:id')
+  @RequirePermissions(Permission.ManageSettings)
+  promoteShopLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentStaff() staff: AuthenticatedStaff,
+  ) {
+    return this.mediaService.promoteShopLogo(id, staff.id);
+  }
+
+  @Post('library')
+  @RequirePermissions(Permission.ManageProducts)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', uploadOptions))
+  uploadLibrary(
+    @Body() dto: UploadLibraryDto,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @CurrentStaff() staff: AuthenticatedStaff,
+  ) {
+    return this.mediaService.uploadLibraryAsset(dto, file, staff.id);
   }
 
   @Post('banners')

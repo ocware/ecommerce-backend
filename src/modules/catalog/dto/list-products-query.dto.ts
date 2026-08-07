@@ -2,12 +2,15 @@ import { ProductStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsInt,
   IsNumberString,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   Max,
   Min,
@@ -43,6 +46,26 @@ export class ListProductsQueryDto {
   @IsOptional()
   @IsString()
   collection?: string;
+
+  @ApiProperty({
+    required: false,
+    type: [String],
+    format: 'uuid',
+    description:
+      'Comma-separated or repeated product UUIDs. When set, results are filtered to these IDs and returned in the requested order.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return undefined;
+    const raw = Array.isArray(value) ? value : String(value).split(',');
+    return raw
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+  })
+  @IsArray()
+  @ArrayMaxSize(24)
+  @IsUUID(undefined, { each: true })
+  ids?: string[];
 
   @ApiProperty({ required: false, example: 'USD' })
   @IsOptional()
