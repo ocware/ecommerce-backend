@@ -56,6 +56,7 @@ const environmentSchema = z
     GA4_API_SECRET: z.string().min(1).optional(),
     API_PREFIX: z.string().min(1).default('api'),
     API_VERSION: z.string().min(1).default('1'),
+    SESSION_COOKIE_NAME: z.string().min(1).default('session'),
     MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
     MEDIA_LOCAL_ROOT: z.string().min(1).default('storage/media'),
     MEDIA_PUBLIC_BASE_URL: z.string().min(1).default('/media'),
