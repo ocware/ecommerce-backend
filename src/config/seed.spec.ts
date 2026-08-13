@@ -14,6 +14,7 @@ describe('reusable deployment seed', () => {
   it('creates an owner, generic shipping methods, and initial settings idempotently', async () => {
     const owner = { id: 'owner-id', email: 'owner@example.com' };
     const standard = { id: 'standard-id', code: 'standard' };
+    const category = { id: 'cat-id', slug: 'stone-jewelry' };
     const database = {
       staffUser: {
         findUnique: jest.fn(() => null),
@@ -26,6 +27,19 @@ describe('reusable deployment seed', () => {
           .mockResolvedValueOnce({ id: 'pickup-id', code: 'local-pickup' }),
       },
       shopSettings: { upsert: jest.fn(() => ({ id: 'default' })) },
+      category: { upsert: jest.fn(() => category) },
+      product: {
+        upsert: jest.fn(({ create }: { create: { slug: string } }) => ({
+          id: 'product-id',
+          slug: create.slug,
+        })),
+      },
+      productVariant: {
+        upsert: jest.fn(() => ({ id: 'variant-id' })),
+      },
+      productPrice: { upsert: jest.fn(() => ({})) },
+      inventoryItem: { upsert: jest.fn(() => ({})) },
+      productCategory: { upsert: jest.fn(() => ({})) },
     };
 
     const result = await seedDeployment(database, {
@@ -37,7 +51,11 @@ describe('reusable deployment seed', () => {
       SEED_STANDARD_SHIPPING_PRICE: '5.00',
     });
 
-    expect(result).toEqual({ owner, standardShipping: standard });
+    expect(result).toEqual({
+      owner,
+      standardShipping: standard,
+      baleCatalog: { category, count: 20 },
+    });
     expect(database.staffUser.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         email: 'owner@example.com',

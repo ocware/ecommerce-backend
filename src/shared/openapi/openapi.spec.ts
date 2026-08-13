@@ -125,7 +125,7 @@ describe('OpenAPI contract', () => {
       }
       return Boolean(operation.requestBody.content['multipart/form-data']);
     });
-    expect(uploadOperations).toHaveLength(4);
+    expect(uploadOperations).toHaveLength(5);
     for (const { operation } of uploadOperations) {
       const requestBody = operation.requestBody;
       if (!requestBody || '$ref' in requestBody) {

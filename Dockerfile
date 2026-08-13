@@ -48,10 +48,10 @@ FROM runtime AS migration
 CMD ["npm", "run", "prisma:migrate:deploy"]
 
 FROM runtime AS worker
-CMD ["node", "dist/worker.js"]
+CMD ["node", "dist/src/worker.js"]
 
 FROM runtime AS api
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider "http://127.0.0.1:${PORT}/${API_PREFIX}/health" || exit 1
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
