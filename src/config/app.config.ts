@@ -6,6 +6,7 @@ export const appConfig = registerAs('app', () => ({
   publicAppUrl: process.env.PUBLIC_APP_URL ?? 'http://localhost:3000',
   apiPrefix: process.env.API_PREFIX ?? 'api',
   apiVersion: process.env.API_VERSION ?? '1',
+  sessionCookieName: process.env.SESSION_COOKIE_NAME ?? 'session',
   databaseUrl: process.env.DATABASE_URL,
   redisUrl: process.env.REDIS_URL,
   jwtSecret: process.env.JWT_SECRET,
