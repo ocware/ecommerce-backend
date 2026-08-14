@@ -130,6 +130,22 @@ Local media uses one Docker volume and is suitable only when all API and worker 
 that host volume. Use the S3 adapter for multiple hosts or external container orchestration. Set all
 `MEDIA_S3_*` variables and back up bucket configuration, lifecycle rules, and access policies.
 
+For Arvan Object Storage, use the bucket's region as `MEDIA_S3_REGION`, the regional S3 endpoint as
+`MEDIA_S3_ENDPOINT`, and virtual-hosted URLs for `MEDIA_S3_PUBLIC_BASE_URL`. For example, bucket
+`shop-media` in `ir-thr-at1` uses:
+
+```dotenv
+MEDIA_STORAGE_DRIVER=s3
+MEDIA_S3_BUCKET=shop-media
+MEDIA_S3_REGION=ir-thr-at1
+MEDIA_S3_ENDPOINT=https://s3.ir-thr-at1.arvanstorage.ir
+MEDIA_S3_PUBLIC_BASE_URL=https://shop-media.s3.ir-thr-at1.arvanstorage.ir
+MEDIA_S3_FORCE_PATH_STYLE=false
+```
+
+Keep access keys only in the deployment secret store. Grant anonymous `s3:GetObject` on the media
+bucket (or serve it through a CDN) while retaining authenticated-only write and delete access.
+
 ## Production checklist
 
 - Secrets are unique, randomly generated, stored with mode `0600`, and absent from source control.
