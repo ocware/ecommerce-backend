@@ -1,6 +1,8 @@
 import {
+  CUSTOMER_SESSION_IDLE_TTL_MS,
   isSessionIdle,
   SESSION_IDLE_TTL_MS,
+  STAFF_SESSION_IDLE_TTL_MS,
   sessionIdleExpiresAt,
   shouldTouchSessionActivity,
 } from './session-ttl';
@@ -27,5 +29,10 @@ describe('session-ttl', () => {
     const now = new Date('2026-08-07T12:00:00.000Z');
     expect(shouldTouchSessionActivity(new Date(now.getTime() - 30_000), now)).toBe(false);
     expect(shouldTouchSessionActivity(new Date(now.getTime() - 60_000), now)).toBe(true);
+  });
+
+  it('uses distinct customer and staff sliding windows', () => {
+    expect(CUSTOMER_SESSION_IDLE_TTL_MS).toBe(30 * 24 * 60 * 60 * 1000);
+    expect(STAFF_SESSION_IDLE_TTL_MS).toBe(7 * 24 * 60 * 60 * 1000);
   });
 });

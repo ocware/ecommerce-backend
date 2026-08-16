@@ -23,20 +23,20 @@ export class CreateCategoryDto {
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   slug!: string;
 
-  @ApiProperty({ required: false, format: 'uuid' })
+  @ApiProperty({ required: false, format: 'uuid', nullable: true })
   @IsOptional()
   @IsUUID()
-  parentId?: string;
+  parentId?: string | null;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
-  imageUrl?: string;
+  imageUrl?: string | null;
 
   @ApiProperty({ required: false })
   @IsOptional()

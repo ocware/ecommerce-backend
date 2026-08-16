@@ -14,6 +14,7 @@ import { randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto
 
 import {
   ACCESS_TOKEN_TTL_SECONDS,
+  CUSTOMER_SESSION_IDLE_TTL_MS,
   isSessionIdle,
   sessionIdleExpiresAt,
   shouldTouchSessionActivity,
@@ -438,7 +439,7 @@ export class CustomersService {
         });
       }
 
-      if (isSessionIdle(currentSession.lastActiveAt, now)) {
+      if (isSessionIdle(currentSession.lastActiveAt, now, CUSTOMER_SESSION_IDLE_TTL_MS)) {
         await this.prisma.customerSession.update({
           where: { id: currentSession.id },
           data: {
@@ -555,7 +556,7 @@ export class CustomersService {
       });
     }
 
-    if (isSessionIdle(session.lastActiveAt, now)) {
+    if (isSessionIdle(session.lastActiveAt, now, CUSTOMER_SESSION_IDLE_TTL_MS)) {
       await this.prisma.customerSession.update({
         where: { id: session.id },
         data: {
@@ -575,7 +576,7 @@ export class CustomersService {
         where: { id: session.id },
         data: {
           lastActiveAt: now,
-          expiresAt: sessionIdleExpiresAt(now),
+          expiresAt: sessionIdleExpiresAt(now, CUSTOMER_SESSION_IDLE_TTL_MS),
         },
       });
     }

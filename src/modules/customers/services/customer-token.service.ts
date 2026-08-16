@@ -4,6 +4,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 import {
   ACCESS_TOKEN_TTL_SECONDS,
+  CUSTOMER_SESSION_IDLE_TTL_MS,
   sessionIdleExpiresAt,
 } from '../../../common/session-ttl';
 import { CustomerAccessTokenPayload } from '../types/customer-token-payload';
@@ -85,7 +86,7 @@ export class CustomerTokenService {
     return {
       token,
       tokenHash,
-      expiresAt: sessionIdleExpiresAt(),
+      expiresAt: sessionIdleExpiresAt(new Date(), CUSTOMER_SESSION_IDLE_TTL_MS),
     };
   }
 

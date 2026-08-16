@@ -430,14 +430,8 @@ export class CatalogService {
 
   async updateCategory(id: string, dto: UpdateCategoryDto) {
     await this.requireCategory(id);
-    if (dto.parentId === id) {
-      throw new BadRequestException({
-        code: 'INVALID_CATEGORY_PARENT',
-        message: 'A category cannot be its own parent.',
-      });
-    }
-    if (dto.parentId) {
-      await this.requireCategory(dto.parentId);
+    if (dto.parentId !== undefined && dto.parentId !== null) {
+      await this.assertValidCategoryParent(id, dto.parentId);
     }
 
     return this.withUniqueConflict(
@@ -1049,6 +1043,38 @@ export class CatalogService {
       throw this.notFound('CATEGORY_NOT_FOUND', 'Category was not found.');
     }
     return category;
+  }
+
+  /** Rejects self-parent and nesting a category under one of its descendants. */
+  private async assertValidCategoryParent(categoryId: string, parentId: string) {
+    if (parentId === categoryId) {
+      throw new BadRequestException({
+        code: 'INVALID_CATEGORY_PARENT',
+        message: 'A category cannot be its own parent.',
+      });
+    }
+
+    await this.requireCategory(parentId);
+
+    let currentId: string | null = parentId;
+    const seen = new Set<string>();
+    while (currentId) {
+      if (currentId === categoryId) {
+        throw new BadRequestException({
+          code: 'INVALID_CATEGORY_PARENT',
+          message: 'A category cannot be nested under one of its descendants.',
+        });
+      }
+      if (seen.has(currentId)) {
+        break;
+      }
+      seen.add(currentId);
+      const node = (await this.prisma.category.findUnique({
+        where: { id: currentId },
+        select: { parentId: true },
+      })) as { parentId: string | null } | null;
+      currentId = node?.parentId ?? null;
+    }
   }
 
   private async requireBrand(id: string) {

@@ -29,11 +29,11 @@ describe('CustomerTokenService', () => {
     const before = Date.now();
     const refreshToken = service.createRefreshToken();
     const after = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
 
     expect(refreshToken.token.length).toBeGreaterThan(32);
     expect(refreshToken.tokenHash).toBe(service.hashOpaqueToken(refreshToken.token));
-    expect(refreshToken.expiresAt.getTime()).toBeGreaterThanOrEqual(before + sevenDays - 1000);
-    expect(refreshToken.expiresAt.getTime()).toBeLessThanOrEqual(after + sevenDays + 1000);
+    expect(refreshToken.expiresAt.getTime()).toBeGreaterThanOrEqual(before + thirtyDays - 1000);
+    expect(refreshToken.expiresAt.getTime()).toBeLessThanOrEqual(after + thirtyDays + 1000);
   });
 });
