@@ -7222,6 +7222,19 @@
             "description": "Optional query value for collection."
           },
           {
+            "name": "ids",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated or repeated product UUIDs. When set, results are filtered to these IDs and returned in the requested order.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
             "name": "currency",
             "required": false,
             "in": "query",
@@ -8083,6 +8096,220 @@
         ],
         "summary": "Update Product",
         "description": "Partially updates the requested admin catalog resource at `/api/v1/admin/products/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
+      },
+      "delete": {
+        "operationId": "AdminCatalogController.deleteProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique resource identifier."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiSuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed or failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "VALIDATION_ERROR",
+                      "message": "The request could not be validated.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing, expired, or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "UNAUTHORIZED",
+                      "message": "Authentication is required.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated account does not have the required permission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "FORBIDDEN",
+                      "message": "You do not have permission to perform this action.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found or is not visible to this account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_NOT_FOUND",
+                      "message": "The requested resource was not found.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with current resource or business state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_CONFLICT",
+                      "message": "The operation conflicts with the current resource state.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was rejected by an applicable rate limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "TOO_MANY_REQUESTS",
+                      "message": "Too many requests. Try again later.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected internal error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Internal server error.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin catalog"
+        ],
+        "summary": "Delete Product",
+        "description": "Removes or deactivates the requested admin catalog resource at `/api/v1/admin/products/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
     },
     "/api/v1/admin/products/{id}/variants": {
@@ -9672,6 +9899,231 @@
         ],
         "summary": "Create Image",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/products/{id}/images`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
+      }
+    },
+    "/api/v1/admin/products/{productId}/images/{imageId}": {
+      "delete": {
+        "operationId": "AdminCatalogController.deleteImage",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product identifier."
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "description": "image ID value."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiSuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed or failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "VALIDATION_ERROR",
+                      "message": "The request could not be validated.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing, expired, or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "UNAUTHORIZED",
+                      "message": "Authentication is required.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated account does not have the required permission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "FORBIDDEN",
+                      "message": "You do not have permission to perform this action.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found or is not visible to this account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_NOT_FOUND",
+                      "message": "The requested resource was not found.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with current resource or business state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_CONFLICT",
+                      "message": "The operation conflicts with the current resource state.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was rejected by an applicable rate limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "TOO_MANY_REQUESTS",
+                      "message": "Too many requests. Try again later.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected internal error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/products/:productId/images/:imageId"
+                  },
+                  "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Internal server error.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin catalog"
+        ],
+        "summary": "Delete Image",
+        "description": "Removes or deactivates the requested admin catalog resource at `/api/v1/admin/products/{productId}/images/{imageId}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
     },
     "/api/v1/admin/products/{id}/categories": {
@@ -12122,6 +12574,19 @@
               "type": "string"
             },
             "description": "Optional query value for collection."
+          },
+          {
+            "name": "ids",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated or repeated product UUIDs. When set, results are filtered to these IDs and returned in the requested order.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
           },
           {
             "name": "currency",
@@ -30790,7 +31255,8 @@
                 "PRODUCT_IMAGE",
                 "CATEGORY_IMAGE",
                 "SHOP_LOGO",
-                "BANNER"
+                "BANNER",
+                "LIBRARY"
               ]
             },
             "description": "Optional query value for type."
@@ -31692,6 +32158,432 @@
         ],
         "summary": "Upload Shop Logo",
         "description": "Replaces or applies the requested admin media resource at `/api/v1/admin/media/shop-logo`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
+      }
+    },
+    "/api/v1/admin/media/shop-logo/from-asset/{id}": {
+      "put": {
+        "operationId": "AdminMediaController.promoteShopLogo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique resource identifier."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiSuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed or failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "VALIDATION_ERROR",
+                      "message": "The request could not be validated.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing, expired, or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "UNAUTHORIZED",
+                      "message": "Authentication is required.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated account does not have the required permission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "FORBIDDEN",
+                      "message": "You do not have permission to perform this action.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found or is not visible to this account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_NOT_FOUND",
+                      "message": "The requested resource was not found.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with current resource or business state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_CONFLICT",
+                      "message": "The operation conflicts with the current resource state.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was rejected by an applicable rate limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "TOO_MANY_REQUESTS",
+                      "message": "Too many requests. Try again later.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected internal error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/shop-logo/from-asset/:id"
+                  },
+                  "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Internal server error.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin media"
+        ],
+        "summary": "Promote Shop Logo",
+        "description": "Replaces or applies the requested admin media resource at `/api/v1/admin/media/shop-logo/from-asset/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
+      }
+    },
+    "/api/v1/admin/media/library": {
+      "post": {
+        "operationId": "AdminMediaController.uploadLibrary",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UploadLibraryDto"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "file"
+                    ],
+                    "properties": {
+                      "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "Image file uploaded as multipart form data."
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Multipart image upload. The `file` field is required; the remaining fields provide asset metadata."
+        },
+        "responses": {
+          "201": {
+            "description": "The operation completed and created a resource or processing attempt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiSuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed or failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/library"
+                  },
+                  "errors": [
+                    {
+                      "code": "VALIDATION_ERROR",
+                      "message": "The request could not be validated.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing, expired, or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/library"
+                  },
+                  "errors": [
+                    {
+                      "code": "UNAUTHORIZED",
+                      "message": "Authentication is required.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated account does not have the required permission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/library"
+                  },
+                  "errors": [
+                    {
+                      "code": "FORBIDDEN",
+                      "message": "You do not have permission to perform this action.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with current resource or business state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/library"
+                  },
+                  "errors": [
+                    {
+                      "code": "RESOURCE_CONFLICT",
+                      "message": "The operation conflicts with the current resource state.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was rejected by an applicable rate limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/library"
+                  },
+                  "errors": [
+                    {
+                      "code": "TOO_MANY_REQUESTS",
+                      "message": "Too many requests. Try again later.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected internal error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                },
+                "example": {
+                  "data": null,
+                  "meta": {
+                    "timestamp": "2026-01-15T12:00:00.000Z",
+                    "path": "/api/v1/admin/media/library"
+                  },
+                  "errors": [
+                    {
+                      "code": "INTERNAL_SERVER_ERROR",
+                      "message": "Internal server error.",
+                      "details": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin media"
+        ],
+        "summary": "Upload Library",
+        "description": "Creates or executes the requested admin media resource at `/api/v1/admin/media/library`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
     },
     "/api/v1/admin/media/banners": {
@@ -35966,6 +36858,10 @@
             "type": "string",
             "description": "description value."
           },
+          "details": {
+            "type": "object",
+            "description": "details value."
+          },
           "shortDescription": {
             "type": "string",
             "description": "short Description value."
@@ -35980,9 +36876,16 @@
             "description": "status value."
           },
           "brandId": {
-            "type": "string",
+            "type": "object",
             "format": "uuid",
+            "nullable": true,
             "description": "brand ID value."
+          },
+          "primaryCategoryId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true,
+            "description": "primary Category ID value."
           },
           "seoTitle": {
             "type": "string",
@@ -36056,6 +36959,11 @@
             "type": "string",
             "description": "description value."
           },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "details value."
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -36108,6 +37016,10 @@
             "type": "string",
             "description": "description value."
           },
+          "details": {
+            "type": "object",
+            "description": "details value."
+          },
           "shortDescription": {
             "type": "string",
             "description": "short Description value."
@@ -36122,9 +37034,16 @@
             "description": "status value."
           },
           "brandId": {
-            "type": "string",
+            "type": "object",
             "format": "uuid",
+            "nullable": true,
             "description": "brand ID value."
+          },
+          "primaryCategoryId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true,
+            "description": "primary Category ID value."
           },
           "seoTitle": {
             "type": "string",
@@ -36247,8 +37166,9 @@
             "description": "amount value."
           },
           "compareAtAmount": {
-            "type": "string",
+            "type": "object",
             "example": "24.99",
+            "nullable": true,
             "description": "compare At Amount value."
           }
         },
@@ -36354,8 +37274,9 @@
             "description": "slug value."
           },
           "parentId": {
-            "type": "string",
+            "type": "object",
             "format": "uuid",
+            "nullable": true,
             "description": "parent ID value."
           },
           "description": {
@@ -36363,7 +37284,8 @@
             "description": "description value."
           },
           "imageUrl": {
-            "type": "string",
+            "type": "object",
+            "nullable": true,
             "description": "image Url value."
           },
           "seoTitle": {
@@ -36403,8 +37325,9 @@
             "description": "slug value."
           },
           "parentId": {
-            "type": "string",
+            "type": "object",
             "format": "uuid",
+            "nullable": true,
             "description": "parent ID value."
           },
           "description": {
@@ -36412,7 +37335,8 @@
             "description": "description value."
           },
           "imageUrl": {
-            "type": "string",
+            "type": "object",
+            "nullable": true,
             "description": "image Url value."
           },
           "seoTitle": {
@@ -36778,6 +37702,14 @@
             "maximum": 365,
             "default": 7,
             "description": "return Window Days value."
+          },
+          "onlinePaymentEnabled": {
+            "type": "boolean",
+            "description": "online Payment Enabled value."
+          },
+          "codPaymentEnabled": {
+            "type": "boolean",
+            "description": "cod Payment Enabled value."
           }
         },
         "description": "Schema for Update Shop Settings Dto."
@@ -37411,6 +38343,75 @@
         ],
         "description": "Schema for Create Refund Dto."
       },
+      "HomePromoTileDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "title value."
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "body value."
+          },
+          "cta": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "cta value."
+          },
+          "linkUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "link Url value."
+          },
+          "imageUrl": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "image Url value."
+          }
+        },
+        "required": [
+          "title",
+          "body",
+          "cta",
+          "linkUrl",
+          "imageUrl"
+        ],
+        "description": "Schema for Home Promo Tile Dto."
+      },
+      "HomeTestimonialDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "name value."
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "city value."
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "quote value."
+          }
+        },
+        "required": [
+          "name",
+          "city",
+          "quote"
+        ],
+        "description": "Schema for Home Testimonial Dto."
+      },
       "UpdateHomeContentDto": {
         "type": "object",
         "properties": {
@@ -37456,6 +38457,25 @@
             "type": "string",
             "maxLength": 500,
             "description": "promo Link Url value."
+          },
+          "promoImageUrl": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "promo Image Url value."
+          },
+          "promoTiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomePromoTileDto"
+            },
+            "description": "promo Tiles value."
+          },
+          "testimonials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeTestimonialDto"
+            },
+            "description": "testimonials value."
           }
         },
         "description": "Schema for Update Home Content Dto."
@@ -38059,6 +39079,17 @@
           }
         },
         "description": "Schema for Upload Shop Logo Dto."
+      },
+      "UploadLibraryDto": {
+        "type": "object",
+        "properties": {
+          "altText": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "alt Text value."
+          }
+        },
+        "description": "Schema for Upload Library Dto."
       },
       "UploadBannerDto": {
         "type": "object",

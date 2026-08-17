@@ -51,6 +51,12 @@ export class CreateProductDto {
   @IsUUID()
   brandId?: string | null;
 
+  @ApiProperty({ required: false, format: 'uuid', nullable: true })
+  @IsOptional()
+  @ValidateIf((_, value) => value != null)
+  @IsUUID()
+  primaryCategoryId?: string | null;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()

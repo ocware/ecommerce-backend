@@ -69,6 +69,11 @@ export class AdminCatalogController {
     return this.catalogService.updateProduct(id, dto);
   }
 
+  @Delete('products/:id')
+  deleteProduct(@Param('id') id: string) {
+    return this.catalogService.archiveProduct(id);
+  }
+
   @Post('products/:id/variants')
   createVariant(@Param('id') id: string, @Body() dto: CreateProductVariantDto) {
     return this.catalogService.createVariant(id, dto);

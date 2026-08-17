@@ -501,6 +501,7 @@ model Category {
   parent               Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children             Category[]         @relation("CategoryTree")
   products             ProductCategory[]
+  primaryProducts      Product[]          @relation("ProductPrimaryCategory")
   discountRestrictions DiscountCategory[]
 
   @@index([parentId])
@@ -509,10 +510,11 @@ model Category {
 }
 
 model Product {
-  id               String        @id @default(uuid()) @db.Uuid
-  brandId          String?       @db.Uuid
-  name             String
-  slug             String        @unique
+  id                String        @id @default(uuid()) @db.Uuid
+  brandId           String?       @db.Uuid
+  primaryCategoryId String?       @db.Uuid
+  name              String
+  slug              String        @unique
   description      String?
   shortDescription String?
   // Product-specific catalog facts (stone, dimensions, engraving, fit notes).
@@ -526,6 +528,7 @@ model Product {
   updatedAt        DateTime      @updatedAt
 
   brand                Brand?                  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  primaryCategory      Category?               @relation("ProductPrimaryCategory", fields: [primaryCategoryId], references: [id], onDelete: SetNull)
   variants             ProductVariant[]
   categories           ProductCategory[]
   attributes           ProductAttribute[]
@@ -538,6 +541,7 @@ model Product {
   wishlistItems        WishlistItem[]
 
   @@index([brandId])
+  @@index([primaryCategoryId])
   @@index([status, publishedAt])
   @@index([name])
 }

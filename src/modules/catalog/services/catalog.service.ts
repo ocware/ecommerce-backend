@@ -25,9 +25,20 @@ import { UpdateProductCollectionDto } from '../dto/update-product-collection.dto
 import { UpdateProductVariantDto } from '../dto/update-product-variant.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
 import { UpsertProductPriceDto } from '../dto/upsert-product-price.dto';
+import {
+  type FlatCategoryNode,
+  buildChildrenMap,
+  buildStoreCategoryTree,
+  buildSubtreeProductCounts,
+  getAncestorIds,
+  getDescendantIds,
+  getPublicCategoryIds,
+  sortCategoriesForAdminTree,
+} from '../utils/category-hierarchy.util';
 
 const adminProductInclude = {
   brand: true,
+  primaryCategory: true,
   categories: {
     include: {
       category: true,
@@ -95,6 +106,9 @@ export class CatalogService {
     if (dto.brandId) {
       await this.requireBrand(dto.brandId);
     }
+    if (dto.primaryCategoryId) {
+      await this.requireCategory(dto.primaryCategoryId);
+    }
 
     return this.withUniqueConflict(
       () =>
@@ -106,6 +120,7 @@ export class CatalogService {
             shortDescription: dto.shortDescription,
             status: dto.status,
             brandId: dto.brandId,
+            primaryCategoryId: dto.primaryCategoryId,
             details: dto.details as Prisma.InputJsonValue | undefined,
             seoTitle: dto.seoTitle,
             seoDescription: dto.seoDescription,
@@ -135,6 +150,7 @@ export class CatalogService {
             details: dto.details as Prisma.InputJsonValue | undefined,
             status: dto.status,
             brandId: dto.brandId,
+            primaryCategoryId: dto.categoryId ?? undefined,
             publishedAt: dto.status === ProductStatus.ACTIVE ? new Date() : undefined,
             categories: dto.categoryId
               ? { create: { categoryId: dto.categoryId } }
@@ -300,7 +316,10 @@ export class CatalogService {
   }
 
   async listAdminProducts(query: ListProductsQueryDto) {
-    const where = this.buildProductWhere(query, false);
+    const categoryScopeIds = query.category
+      ? await this.resolveCategoryScopeIds(query.category, false)
+      : undefined;
+    const where = this.buildProductWhere(query, false, categoryScopeIds);
     const orderBy = this.buildProductOrder(query.sort);
     const skip = (query.page - 1) * query.limit;
     const [total, items] = await this.prisma.$transaction([
@@ -330,10 +349,22 @@ export class CatalogService {
     return product;
   }
 
+  async archiveProduct(id: string) {
+    await this.requireProduct(id);
+    await this.prisma.product.update({
+      where: { id },
+      data: { status: ProductStatus.ARCHIVED },
+    });
+    return { id, deleted: true };
+  }
+
   async updateProduct(id: string, dto: UpdateProductDto) {
     await this.requireProduct(id);
     if (dto.brandId) {
       await this.requireBrand(dto.brandId);
+    }
+    if (dto.primaryCategoryId) {
+      await this.requireCategory(dto.primaryCategoryId);
     }
 
     return this.withUniqueConflict(
@@ -347,6 +378,9 @@ export class CatalogService {
             ...(dto.shortDescription !== undefined ? { shortDescription: dto.shortDescription } : {}),
             ...(dto.status !== undefined ? { status: dto.status } : {}),
             ...(dto.brandId !== undefined ? { brandId: dto.brandId } : {}),
+            ...(dto.primaryCategoryId !== undefined
+              ? { primaryCategoryId: dto.primaryCategoryId }
+              : {}),
             ...(dto.details !== undefined ? { details: dto.details as Prisma.InputJsonValue } : {}),
             ...(dto.seoTitle !== undefined ? { seoTitle: dto.seoTitle } : {}),
             ...(dto.seoDescription !== undefined ? { seoDescription: dto.seoDescription } : {}),
@@ -641,6 +675,7 @@ export class CatalogService {
   async setProductCategories(productId: string, dto: SetResourceIdsDto) {
     await this.requireProduct(productId);
     await this.requireAllCategories(dto.ids);
+    const primaryCategoryId = dto.ids[0] ?? null;
     await this.prisma.$transaction(async (transaction) => {
       await transaction.productCategory.deleteMany({ where: { productId } });
       if (dto.ids.length) {
@@ -648,6 +683,10 @@ export class CatalogService {
           data: dto.ids.map((categoryId) => ({ productId, categoryId })),
         });
       }
+      await transaction.product.update({
+        where: { id: productId },
+        data: { primaryCategoryId },
+      });
     });
     return this.findAdminProduct(productId);
   }
@@ -694,7 +733,13 @@ export class CatalogService {
   }
 
   async listStoreProducts(query: ListProductsQueryDto) {
-    const where = this.buildProductWhere(query, true);
+    const categoryScopeIds = query.category
+      ? await this.resolveCategoryScopeIds(query.category, true)
+      : undefined;
+    if (query.category && !categoryScopeIds?.length) {
+      return this.paginated([], 0, query.page, query.limit);
+    }
+    const where = this.buildProductWhere(query, true, categoryScopeIds);
     const skip = (query.page - 1) * query.limit;
     const specialSort =
       Boolean(query.inStock) ||
@@ -855,6 +900,7 @@ export class CatalogService {
       where: { slug, status: ProductStatus.ACTIVE },
       include: {
         brand: true,
+        primaryCategory: true,
         categories: {
           where: { category: { isActive: true } },
           include: { category: true },
@@ -895,8 +941,12 @@ export class CatalogService {
     if (!product) {
       throw this.notFound('PRODUCT_NOT_FOUND', 'Product was not found.');
     }
+    const categoryAncestors = await this.buildCategoryAncestorChain(
+      product.primaryCategoryId ?? product.categories[0]?.categoryId ?? null,
+    );
     return {
       ...product,
+      categoryAncestors,
       variants: product.variants.map((variant) => ({
         ...variant,
         availableStock: Math.max(
@@ -908,15 +958,47 @@ export class CatalogService {
     };
   }
 
-  listStoreCategories() {
-    return this.prisma.category.findMany({
-      where: { isActive: true },
-      include: {
-        children: { where: { isActive: true }, orderBy: { position: 'asc' } },
-        _count: { select: { products: true } },
-      },
+  async listStoreCategories() {
+    const categories = await this.prisma.category.findMany({
       orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        parentId: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+        position: true,
+        isActive: true,
+      },
     });
+    const flat = categories as FlatCategoryNode[];
+    const publicIds = getPublicCategoryIds(flat);
+    const publicCategoryIds = [...publicIds];
+    const childrenMap = buildChildrenMap(flat);
+    const pairs = await this.prisma.productCategory.findMany({
+      where: {
+        categoryId: { in: publicCategoryIds },
+        product: { status: ProductStatus.ACTIVE },
+      },
+      select: { productId: true, categoryId: true },
+    });
+    const productsByCategory = new Map<string, Set<string>>();
+    for (const pair of pairs) {
+      const assigned = productsByCategory.get(pair.categoryId) ?? new Set<string>();
+      assigned.add(pair.productId);
+      productsByCategory.set(pair.categoryId, assigned);
+    }
+    const directCounts = new Map<string, number>();
+    for (const categoryId of publicCategoryIds) {
+      directCounts.set(categoryId, productsByCategory.get(categoryId)?.size ?? 0);
+    }
+    const subtreeCounts = buildSubtreeProductCounts(
+      publicCategoryIds,
+      childrenMap,
+      productsByCategory,
+    );
+    return buildStoreCategoryTree(flat, publicIds, directCounts, subtreeCounts);
   }
 
   listStoreBrands() {
@@ -943,6 +1025,7 @@ export class CatalogService {
   private buildProductWhere(
     query: ListProductsQueryDto,
     storeOnly: boolean,
+    categoryScopeIds?: string[] | null,
   ): Prisma.ProductWhereInput {
     const priceFilter =
       query.minPrice !== undefined || query.maxPrice !== undefined
@@ -954,20 +1037,23 @@ export class CatalogService {
             },
           }
         : undefined;
+    const categoryFilter = categoryScopeIds?.length
+      ? {
+          some: {
+            categoryId: { in: categoryScopeIds },
+            ...(storeOnly ? { category: { isActive: true } } : {}),
+          },
+        }
+      : undefined;
     return {
       id: query.ids?.length ? { in: query.ids } : undefined,
-      status: storeOnly ? ProductStatus.ACTIVE : query.status,
+      status: storeOnly
+        ? ProductStatus.ACTIVE
+        : query.status !== undefined
+          ? query.status
+          : { not: ProductStatus.ARCHIVED },
       brand: query.brand ? { slug: query.brand } : undefined,
-      categories: query.category
-        ? {
-            some: {
-              category: {
-                slug: query.category,
-                isActive: storeOnly ? true : undefined,
-              },
-            },
-          }
-        : undefined,
+      categories: categoryFilter,
       collections: query.collection
         ? {
             some: {
@@ -1105,6 +1191,73 @@ export class CatalogService {
     if (count !== ids.length) {
       throw this.notFound('CATEGORY_NOT_FOUND', 'One or more categories were not found.');
     }
+  }
+
+  private async resolveCategoryScopeIds(
+    slug: string,
+    storeOnly: boolean,
+  ): Promise<string[] | null> {
+    const category = await this.prisma.category.findUnique({ where: { slug } });
+    if (!category) return null;
+    if (storeOnly && !category.isActive) return null;
+
+    const categories = await this.prisma.category.findMany({
+      select: {
+        id: true,
+        parentId: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+        position: true,
+        isActive: true,
+      },
+    });
+    const flat = categories as FlatCategoryNode[];
+    const publicIds = storeOnly ? getPublicCategoryIds(flat) : new Set(flat.map((node) => node.id));
+    if (!publicIds.has(category.id)) return null;
+
+    const childrenMap = buildChildrenMap(flat);
+    const descendants = getDescendantIds(category.id, childrenMap).filter((id) =>
+      publicIds.has(id),
+    );
+    return [category.id, ...descendants];
+  }
+
+  private async buildCategoryAncestorChain(primaryCategoryId: string | null) {
+    if (!primaryCategoryId) return [];
+
+    const categories = await this.prisma.category.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        parentId: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+        position: true,
+        isActive: true,
+      },
+    });
+    const flat = categories as FlatCategoryNode[];
+    const publicIds = getPublicCategoryIds(flat);
+    if (!publicIds.has(primaryCategoryId)) return [];
+
+    const nodesById = new Map(flat.map((node) => [node.id, node]));
+    const parentMap = new Map(flat.map((node) => [node.id, node.parentId]));
+    const ancestorIds = getAncestorIds(primaryCategoryId, parentMap).filter((id) =>
+      publicIds.has(id),
+    );
+    const chain = ancestorIds
+      .map((id) => nodesById.get(id))
+      .filter((node): node is FlatCategoryNode => Boolean(node))
+      .map((node) => ({ id: node.id, name: node.name, slug: node.slug }));
+    const primary = nodesById.get(primaryCategoryId);
+    if (primary) {
+      chain.push({ id: primary.id, name: primary.name, slug: primary.slug });
+    }
+    return chain;
   }
 
   private notFound(code: string, message: string): NotFoundException {

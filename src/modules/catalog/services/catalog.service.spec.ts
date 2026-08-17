@@ -1,6 +1,7 @@
 import { ProductStatus, ProductVariantStatus } from '@prisma/client';
 
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { ProductSort } from '../dto/list-products-query.dto';
 import { CatalogService } from './catalog.service';
 
 describe('CatalogService', () => {
@@ -33,7 +34,11 @@ describe('CatalogService', () => {
   const prisma = {
     product: {
       findUnique: jest.fn(),
+      update: jest.fn(),
+      count: jest.fn(),
+      findMany: jest.fn(),
     },
+    $transaction: jest.fn(),
     productVariant: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -103,6 +108,100 @@ describe('CatalogService', () => {
         },
       }),
     );
+  });
+
+  describe('archiveProduct', () => {
+    it('archives an existing product without deleting the row', async () => {
+      prisma.product.findUnique.mockResolvedValue(product);
+      prisma.product.update.mockResolvedValue({ ...product, status: ProductStatus.ARCHIVED });
+
+      await expect(service.archiveProduct(product.id)).resolves.toEqual({
+        id: product.id,
+        deleted: true,
+      });
+
+      expect(prisma.product.update).toHaveBeenCalledWith({
+        where: { id: product.id },
+        data: { status: ProductStatus.ARCHIVED },
+      });
+    });
+
+    it('is idempotent when the product is already archived', async () => {
+      prisma.product.findUnique.mockResolvedValue({
+        ...product,
+        status: ProductStatus.ARCHIVED,
+      });
+      prisma.product.update.mockResolvedValue({ ...product, status: ProductStatus.ARCHIVED });
+
+      await expect(service.archiveProduct(product.id)).resolves.toEqual({
+        id: product.id,
+        deleted: true,
+      });
+
+      expect(prisma.product.update).toHaveBeenCalledWith({
+        where: { id: product.id },
+        data: { status: ProductStatus.ARCHIVED },
+      });
+    });
+
+    it('rejects archiving a missing product', async () => {
+      prisma.product.findUnique.mockResolvedValue(null);
+
+      await expect(service.archiveProduct('missing-id')).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'PRODUCT_NOT_FOUND' }) as Record<
+          string,
+          unknown
+        >,
+      });
+
+      expect(prisma.product.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listAdminProducts', () => {
+    it('excludes archived products by default', async () => {
+      prisma.$transaction.mockImplementation(async (operations: Promise<unknown>[]) =>
+        Promise.all(operations),
+      );
+      prisma.product.count.mockResolvedValue(0);
+      prisma.product.findMany.mockResolvedValue([]);
+
+      await service.listAdminProducts({ page: 1, limit: 20, sort: ProductSort.Newest });
+
+      expect(prisma.product.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          status: { not: ProductStatus.ARCHIVED },
+        }) as Record<string, unknown>,
+      });
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: { not: ProductStatus.ARCHIVED },
+          }) as Record<string, unknown>,
+        }),
+      );
+    });
+
+    it('allows explicit archived filtering', async () => {
+      prisma.$transaction.mockImplementation(async (operations: Promise<unknown>[]) =>
+        Promise.all(operations),
+      );
+      prisma.product.count.mockResolvedValue(0);
+      prisma.product.findMany.mockResolvedValue([]);
+
+      await service.listAdminProducts({
+        page: 1,
+        limit: 20,
+        sort: ProductSort.Newest,
+        status: ProductStatus.ARCHIVED,
+      });
+
+      expect(prisma.product.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          status: ProductStatus.ARCHIVED,
+        }) as Record<string, unknown>,
+      });
+    });
   });
 
   describe('updateCategory', () => {
