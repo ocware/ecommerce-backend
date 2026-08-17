@@ -98,6 +98,85 @@ const adminProductInclude = {
   },
 } satisfies Prisma.ProductInclude;
 
+const publicProductListSelect = {
+  id: true,
+  brandId: true,
+  name: true,
+  slug: true,
+  description: true,
+  shortDescription: true,
+  details: true,
+  status: true,
+  seoTitle: true,
+  seoDescription: true,
+  publishedAt: true,
+  createdAt: true,
+  updatedAt: true,
+  brand: true,
+  categories: {
+    where: { category: { isActive: true } },
+    include: { category: true },
+  },
+  images: { orderBy: { position: 'asc' as const }, take: 1 },
+  variants: {
+    where: { status: ProductVariantStatus.ACTIVE },
+    orderBy: { position: 'asc' as const },
+    include: {
+      prices: true,
+      inventory: true,
+    },
+  },
+} satisfies Prisma.ProductSelect;
+
+const publicProductDetailSelect = {
+  ...publicProductListSelect,
+  images: { orderBy: { position: 'asc' as const } },
+  attributes: {
+    orderBy: { position: 'asc' as const },
+    include: { values: { orderBy: { position: 'asc' as const } } },
+  },
+  variants: {
+    where: { status: ProductVariantStatus.ACTIVE },
+    orderBy: { position: 'asc' as const },
+    include: {
+      prices: true,
+      inventory: true,
+      images: { orderBy: { position: 'asc' as const } },
+      attributeValues: {
+        include: { attributeValue: { include: { attribute: true } } },
+      },
+    },
+  },
+  collections: {
+    where: { collection: { isActive: true } },
+    include: { collection: true },
+  },
+  relatedProducts: {
+    where: { relatedProduct: { status: ProductStatus.ACTIVE } },
+    orderBy: { position: 'asc' as const },
+    include: {
+      relatedProduct: {
+        select: {
+          id: true,
+          brandId: true,
+          name: true,
+          slug: true,
+          description: true,
+          shortDescription: true,
+          details: true,
+          status: true,
+          seoTitle: true,
+          seoDescription: true,
+          publishedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          images: { orderBy: { position: 'asc' as const }, take: 1 },
+        },
+      },
+    },
+  },
+} satisfies Prisma.ProductSelect;
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
@@ -749,22 +828,6 @@ export class CatalogService {
       ProductSort.Bestselling,
       ProductSort.Popular,
       ].includes(query.sort);
-    const include = {
-      brand: true,
-      categories: {
-        where: { category: { isActive: true } },
-        include: { category: true },
-      },
-      images: { orderBy: { position: 'asc' as const }, take: 1 },
-      variants: {
-        where: { status: ProductVariantStatus.ACTIVE },
-        orderBy: { position: 'asc' as const },
-        include: {
-          prices: { where: query.currency ? { currency: query.currency } : undefined },
-          inventory: true,
-        },
-      },
-    };
     const [databaseTotal, foundItems] = await this.prisma.$transaction([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({
@@ -772,7 +835,16 @@ export class CatalogService {
         orderBy: specialSort ? undefined : this.buildProductOrder(query.sort),
         skip: specialSort ? undefined : skip,
         take: specialSort ? undefined : query.limit,
-        include,
+        select: {
+          ...publicProductListSelect,
+          variants: {
+            ...publicProductListSelect.variants,
+            include: {
+              ...publicProductListSelect.variants.include,
+              prices: { where: query.currency ? { currency: query.currency } : undefined },
+            },
+          },
+        },
       }),
     ]);
     let rawItems = foundItems;
@@ -898,41 +970,13 @@ export class CatalogService {
   async findStoreProduct(slug: string, currency?: string) {
     const product = await this.prisma.product.findFirst({
       where: { slug, status: ProductStatus.ACTIVE },
-      include: {
-        brand: true,
-        primaryCategory: true,
-        categories: {
-          where: { category: { isActive: true } },
-          include: { category: true },
-        },
-        images: { orderBy: { position: 'asc' } },
-        attributes: {
-          orderBy: { position: 'asc' },
-          include: { values: { orderBy: { position: 'asc' } } },
-        },
+      select: {
+        ...publicProductDetailSelect,
         variants: {
-          where: { status: ProductVariantStatus.ACTIVE },
-          orderBy: { position: 'asc' },
+          ...publicProductDetailSelect.variants,
           include: {
+            ...publicProductDetailSelect.variants.include,
             prices: { where: currency ? { currency } : undefined },
-            inventory: true,
-            images: { orderBy: { position: 'asc' } },
-            attributeValues: {
-              include: { attributeValue: { include: { attribute: true } } },
-            },
-          },
-        },
-        collections: {
-          where: { collection: { isActive: true } },
-          include: { collection: true },
-        },
-        relatedProducts: {
-          where: { relatedProduct: { status: ProductStatus.ACTIVE } },
-          orderBy: { position: 'asc' },
-          include: {
-            relatedProduct: {
-              include: { images: { orderBy: { position: 'asc' }, take: 1 } },
-            },
           },
         },
       },
@@ -942,7 +986,7 @@ export class CatalogService {
       throw this.notFound('PRODUCT_NOT_FOUND', 'Product was not found.');
     }
     const categoryAncestors = await this.buildCategoryAncestorChain(
-      product.primaryCategoryId ?? product.categories[0]?.categoryId ?? null,
+      product.categories[0]?.categoryId ?? null,
     );
     return {
       ...product,
