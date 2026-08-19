@@ -112,9 +112,7 @@
             }
           }
         },
-        "tags": [
-          "health"
-        ],
+        "tags": ["health"],
         "summary": "Get Health",
         "description": "Reads the requested health resource at `/api/health`. This operation does not require bearer authentication. Responses use the standard API envelope."
       }
@@ -252,9 +250,7 @@
             }
           }
         },
-        "tags": [
-          "admin auth"
-        ],
+        "tags": ["admin auth"],
         "summary": "Sign in a staff member",
         "description": "Authenticates a staff account and issues staff access and refresh credentials. This operation does not require bearer authentication. Responses use the standard API envelope."
       }
@@ -392,9 +388,7 @@
             }
           }
         },
-        "tags": [
-          "admin auth"
-        ],
+        "tags": ["admin auth"],
         "summary": "Refresh staff credentials",
         "description": "Rotates a valid staff refresh token and returns a new credential pair. This operation does not require bearer authentication. Responses use the standard API envelope."
       }
@@ -585,9 +579,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin auth"
-        ],
+        "tags": ["admin auth"],
         "summary": "Logout",
         "description": "Creates or executes the requested admin auth resource at `/api/v1/admin/auth/logout`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -725,9 +717,7 @@
             }
           }
         },
-        "tags": [
-          "admin auth"
-        ],
+        "tags": ["admin auth"],
         "summary": "Request Password Reset",
         "description": "Creates or executes the requested admin auth resource at `/api/v1/admin/auth/password-reset/request`. This operation does not require bearer authentication. Responses use the standard API envelope."
       }
@@ -865,9 +855,7 @@
             }
           }
         },
-        "tags": [
-          "admin auth"
-        ],
+        "tags": ["admin auth"],
         "summary": "Confirm Password Reset",
         "description": "Creates or executes the requested admin auth resource at `/api/v1/admin/auth/password-reset/confirm`. This operation does not require bearer authentication. Responses use the standard API envelope."
       }
@@ -1023,9 +1011,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin auth"
-        ],
+        "tags": ["admin auth"],
         "summary": "Get Me",
         "description": "Reads the requested admin auth resource at `/api/v1/admin/auth/me`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -1181,9 +1167,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin staff"
-        ],
+        "tags": ["admin staff"],
         "summary": "List Staff Users",
         "description": "Reads the requested admin staff resource at `/api/v1/admin/staff`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -1372,9 +1356,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin staff"
-        ],
+        "tags": ["admin staff"],
         "summary": "Create Staff User",
         "description": "Creates or executes the requested admin staff resource at `/api/v1/admin/staff`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -1564,9 +1546,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin staff"
-        ],
+        "tags": ["admin staff"],
         "summary": "Find Staff User",
         "description": "Reads the requested admin staff resource at `/api/v1/admin/staff/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -1789,9 +1769,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin staff"
-        ],
+        "tags": ["admin staff"],
         "summary": "Update Staff User",
         "description": "Partially updates the requested admin staff resource at `/api/v1/admin/staff/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -1929,9 +1907,7 @@
             }
           }
         },
-        "tags": [
-          "store analytics"
-        ],
+        "tags": ["store analytics"],
         "summary": "Consent",
         "description": "Creates or executes the requested store analytics resource at `/api/v1/store/consents`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -2069,9 +2045,7 @@
             }
           }
         },
-        "tags": [
-          "store analytics"
-        ],
+        "tags": ["store analytics"],
         "summary": "Events",
         "description": "Creates or executes the requested store analytics resource at `/api/v1/store/analytics/events`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -2258,9 +2232,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin analytics"
-        ],
+        "tags": ["admin analytics"],
         "summary": "Funnel",
         "description": "Reads the requested admin analytics resource at `/api/v1/admin/analytics/funnel`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -2427,9 +2399,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store checkout"
-        ],
+        "tags": ["store checkout"],
         "summary": "Checkout Customer",
         "description": "Creates or executes the requested store checkout resource at `/api/v1/store/checkout`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -2578,9 +2548,7 @@
             }
           }
         },
-        "tags": [
-          "store checkout"
-        ],
+        "tags": ["store checkout"],
         "summary": "Create an order from a guest cart",
         "description": "Uses the guest cart token to revalidate totals, reserve inventory, snapshot purchased items and customer details, and create the order atomically. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -2624,13 +2592,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "CONFIRMED",
-                "PROCESSING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "CONFIRMED", "PROCESSING", "COMPLETED", "CANCELLED"]
             },
             "description": "Filter results by status."
           },
@@ -2640,14 +2602,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "AUTHORIZED",
-                "PAID",
-                "FAILED",
-                "PARTIALLY_REFUNDED",
-                "REFUNDED"
-              ]
+              "enum": ["PENDING", "AUTHORIZED", "PAID", "FAILED", "PARTIALLY_REFUNDED", "REFUNDED"]
             },
             "description": "Optional query value for payment Status."
           },
@@ -2657,13 +2612,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "UNFULFILLED",
-                "PROCESSING",
-                "PARTIALLY_FULFILLED",
-                "FULFILLED",
-                "CANCELLED"
-              ]
+              "enum": ["UNFULFILLED", "PROCESSING", "PARTIALLY_FULFILLED", "FULFILLED", "CANCELLED"]
             },
             "description": "Optional query value for fulfillment Status."
           }
@@ -2791,9 +2740,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store orders"
-        ],
+        "tags": ["store orders"],
         "summary": "List Orders",
         "description": "Reads the requested store orders resource at `/api/v1/store/orders`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -2959,9 +2906,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store orders"
-        ],
+        "tags": ["store orders"],
         "summary": "Get Order",
         "description": "Reads the requested store orders resource at `/api/v1/store/orders/{id}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -3162,9 +3107,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store orders"
-        ],
+        "tags": ["store orders"],
         "summary": "Cancel Order",
         "description": "Partially updates the requested store orders resource at `/api/v1/store/orders/{id}/cancellation`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -3208,13 +3151,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "CONFIRMED",
-                "PROCESSING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "CONFIRMED", "PROCESSING", "COMPLETED", "CANCELLED"]
             },
             "description": "Filter results by status."
           },
@@ -3224,14 +3161,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "AUTHORIZED",
-                "PAID",
-                "FAILED",
-                "PARTIALLY_REFUNDED",
-                "REFUNDED"
-              ]
+              "enum": ["PENDING", "AUTHORIZED", "PAID", "FAILED", "PARTIALLY_REFUNDED", "REFUNDED"]
             },
             "description": "Optional query value for payment Status."
           },
@@ -3241,13 +3171,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "UNFULFILLED",
-                "PROCESSING",
-                "PARTIALLY_FULFILLED",
-                "FULFILLED",
-                "CANCELLED"
-              ]
+              "enum": ["UNFULFILLED", "PROCESSING", "PARTIALLY_FULFILLED", "FULFILLED", "CANCELLED"]
             },
             "description": "Optional query value for fulfillment Status."
           }
@@ -3399,9 +3323,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin orders"
-        ],
+        "tags": ["admin orders"],
         "summary": "List Orders",
         "description": "Reads the requested admin orders resource at `/api/v1/admin/orders`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -3591,9 +3513,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin orders"
-        ],
+        "tags": ["admin orders"],
         "summary": "Get Order",
         "description": "Reads the requested admin orders resource at `/api/v1/admin/orders/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -3818,9 +3738,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin orders"
-        ],
+        "tags": ["admin orders"],
         "summary": "Cancel Order",
         "description": "Partially updates the requested admin orders resource at `/api/v1/admin/orders/{id}/cancellation`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -4010,9 +3928,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin orders"
-        ],
+        "tags": ["admin orders"],
         "summary": "List Notes",
         "description": "Reads the requested admin orders resource at `/api/v1/admin/orders/{id}/notes`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -4235,9 +4151,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin orders"
-        ],
+        "tags": ["admin orders"],
         "summary": "Add Note",
         "description": "Creates or executes the requested admin orders resource at `/api/v1/admin/orders/{id}/notes`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -4375,9 +4289,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Create Cart",
         "description": "Creates or executes the requested store guest carts resource at `/api/v1/store/carts`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -4524,9 +4436,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Get Cart",
         "description": "Reads the requested store guest carts resource at `/api/v1/store/carts/{id}`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -4708,9 +4618,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Add Item",
         "description": "Creates or executes the requested store guest carts resource at `/api/v1/store/carts/{id}/items`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -4901,9 +4809,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Update Item",
         "description": "Partially updates the requested store guest carts resource at `/api/v1/store/carts/{id}/items/{itemId}`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       },
@@ -5081,9 +4987,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Remove Item",
         "description": "Removes or deactivates the requested store guest carts resource at `/api/v1/store/carts/{id}/items/{itemId}`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -5265,9 +5169,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Apply Discount",
         "description": "Replaces or applies the requested store guest carts resource at `/api/v1/store/carts/{id}/discount`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       },
@@ -5436,9 +5338,7 @@
             }
           }
         },
-        "tags": [
-          "store guest carts"
-        ],
+        "tags": ["store guest carts"],
         "summary": "Remove Discount",
         "description": "Removes or deactivates the requested store guest carts resource at `/api/v1/store/carts/{id}/discount`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -5605,9 +5505,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Create Cart",
         "description": "Creates or executes the requested store customer cart resource at `/api/v1/store/cart`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -5773,9 +5671,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Get Cart",
         "description": "Reads the requested store customer cart resource at `/api/v1/store/cart/{id}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -5976,9 +5872,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Add Item",
         "description": "Creates or executes the requested store customer cart resource at `/api/v1/store/cart/{id}/items`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -6188,9 +6082,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Update Item",
         "description": "Partially updates the requested store customer cart resource at `/api/v1/store/cart/{id}/items/{itemId}`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -6387,9 +6279,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Remove Item",
         "description": "Removes or deactivates the requested store customer cart resource at `/api/v1/store/cart/{id}/items/{itemId}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -6590,9 +6480,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Merge Guest Cart",
         "description": "Creates or executes the requested store customer cart resource at `/api/v1/store/cart/{id}/merge`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -6793,9 +6681,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Apply Discount",
         "description": "Replaces or applies the requested store customer cart resource at `/api/v1/store/cart/{id}/discount`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -6983,9 +6869,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customer cart"
-        ],
+        "tags": ["store customer cart"],
         "summary": "Remove Discount",
         "description": "Removes or deactivates the requested store customer cart resource at `/api/v1/store/cart/{id}/discount`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -7176,9 +7060,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Product",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -7250,11 +7132,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "DRAFT",
-                "ACTIVE",
-                "ARCHIVED"
-              ]
+              "enum": ["DRAFT", "ACTIVE", "ARCHIVED"]
             },
             "description": "Filter results by status."
           },
@@ -7481,9 +7359,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "List Products",
         "description": "Reads the requested admin catalog resource at `/api/v1/admin/products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -7674,9 +7550,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Configured Product",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/products/configured`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -7866,9 +7740,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Find Product",
         "description": "Reads the requested admin catalog resource at `/api/v1/admin/products/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -8091,9 +7963,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Update Product",
         "description": "Partially updates the requested admin catalog resource at `/api/v1/admin/products/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -8305,9 +8175,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Delete Product",
         "description": "Removes or deactivates the requested admin catalog resource at `/api/v1/admin/products/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -8532,9 +8400,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Variant",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/products/{id}/variants`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -8759,9 +8625,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Update Variant",
         "description": "Partially updates the requested admin catalog resource at `/api/v1/admin/variants/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -8986,9 +8850,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Set Variant Attribute Values",
         "description": "Replaces or applies the requested admin catalog resource at `/api/v1/admin/variants/{id}/attribute-values`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -9213,9 +9075,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Upsert Price",
         "description": "Replaces or applies the requested admin catalog resource at `/api/v1/admin/variants/{id}/price`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -9440,9 +9300,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Attribute",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/products/{id}/attributes`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -9667,9 +9525,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Attribute Value",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/attributes/{id}/values`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -9894,9 +9750,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Image",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/products/{id}/images`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -10119,9 +9973,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Delete Image",
         "description": "Removes or deactivates the requested admin catalog resource at `/api/v1/admin/products/{productId}/images/{imageId}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -10346,9 +10198,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Set Product Categories",
         "description": "Replaces or applies the requested admin catalog resource at `/api/v1/admin/products/{id}/categories`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -10573,9 +10423,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Set Related Products",
         "description": "Replaces or applies the requested admin catalog resource at `/api/v1/admin/products/{id}/related-products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -10766,9 +10614,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Category",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/categories`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -10922,9 +10768,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "List Categories",
         "description": "Reads the requested admin catalog resource at `/api/v1/admin/categories`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -11149,9 +10993,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Update Category",
         "description": "Partially updates the requested admin catalog resource at `/api/v1/admin/categories/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -11342,9 +11184,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Brand",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/brands`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -11498,9 +11338,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "List Brands",
         "description": "Reads the requested admin catalog resource at `/api/v1/admin/brands`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -11725,9 +11563,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Update Brand",
         "description": "Partially updates the requested admin catalog resource at `/api/v1/admin/brands/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -11918,9 +11754,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Create Collection",
         "description": "Creates or executes the requested admin catalog resource at `/api/v1/admin/collections`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -12074,9 +11908,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "List Collections",
         "description": "Reads the requested admin catalog resource at `/api/v1/admin/collections`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -12301,9 +12133,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Update Collection",
         "description": "Partially updates the requested admin catalog resource at `/api/v1/admin/collections/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -12528,9 +12358,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin catalog"
-        ],
+        "tags": ["admin catalog"],
         "summary": "Set Collection Products",
         "description": "Replaces or applies the requested admin catalog resource at `/api/v1/admin/collections/{id}/products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -12604,11 +12432,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "DRAFT",
-                "ACTIVE",
-                "ARCHIVED"
-              ]
+              "enum": ["DRAFT", "ACTIVE", "ARCHIVED"]
             },
             "description": "Filter results by status."
           },
@@ -12782,9 +12606,7 @@
             }
           }
         },
-        "tags": [
-          "store catalog"
-        ],
+        "tags": ["store catalog"],
         "summary": "List Products",
         "description": "Reads the requested store catalog resource at `/api/v1/store/products`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -12931,9 +12753,7 @@
             }
           }
         },
-        "tags": [
-          "store catalog"
-        ],
+        "tags": ["store catalog"],
         "summary": "Find Product",
         "description": "Reads the requested store catalog resource at `/api/v1/store/products/{slug}`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -13036,9 +12856,7 @@
             }
           }
         },
-        "tags": [
-          "store catalog"
-        ],
+        "tags": ["store catalog"],
         "summary": "List Categories",
         "description": "Reads the requested store catalog resource at `/api/v1/store/categories`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -13141,9 +12959,7 @@
             }
           }
         },
-        "tags": [
-          "store catalog"
-        ],
+        "tags": ["store catalog"],
         "summary": "List Brands",
         "description": "Reads the requested store catalog resource at `/api/v1/store/brands`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -13246,9 +13062,7 @@
             }
           }
         },
-        "tags": [
-          "store catalog"
-        ],
+        "tags": ["store catalog"],
         "summary": "List Collections",
         "description": "Reads the requested store catalog resource at `/api/v1/store/collections`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -13439,9 +13253,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Initialize Inventory",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -13634,9 +13446,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "List Inventory",
         "description": "Reads the requested admin inventory resource at `/api/v1/admin/inventory`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -13831,9 +13641,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "List Low Stock",
         "description": "Reads the requested admin inventory resource at `/api/v1/admin/inventory/low-stock`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -14024,9 +13832,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Create Reservation",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory/reservations`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -14217,9 +14023,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Expire Reservations",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory/reservations/expire`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -14433,9 +14237,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Confirm Reservation",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory/reservations/{id}/confirm`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -14649,9 +14451,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Release Reservation",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory/reservations/{id}/release`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -14841,9 +14641,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Get Inventory",
         "description": "Reads the requested admin inventory resource at `/api/v1/admin/inventory/{variantId}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -15068,9 +14866,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Update Low Stock Threshold",
         "description": "Partially updates the requested admin inventory resource at `/api/v1/admin/inventory/{variantId}/low-stock-threshold`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -15295,9 +15091,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Adjust Stock",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory/{variantId}/adjustments`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -15522,9 +15316,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "Restore Stock",
         "description": "Creates or executes the requested admin inventory resource at `/api/v1/admin/inventory/{variantId}/restorations`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -15743,9 +15535,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin inventory"
-        ],
+        "tags": ["admin inventory"],
         "summary": "List Movements",
         "description": "Reads the requested admin inventory resource at `/api/v1/admin/inventory/{variantId}/movements`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -15882,9 +15672,7 @@
             }
           }
         },
-        "tags": [
-          "store inventory"
-        ],
+        "tags": ["store inventory"],
         "summary": "Get Availability",
         "description": "Reads the requested store inventory resource at `/api/v1/store/inventory/{variantId}`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -16040,9 +15828,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin settings"
-        ],
+        "tags": ["admin settings"],
         "summary": "Get",
         "description": "Reads the requested admin settings resource at `/api/v1/admin/settings`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -16231,9 +16017,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin settings"
-        ],
+        "tags": ["admin settings"],
         "summary": "Update",
         "description": "Partially updates the requested admin settings resource at `/api/v1/admin/settings`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -16336,9 +16120,7 @@
             }
           }
         },
-        "tags": [
-          "store settings"
-        ],
+        "tags": ["store settings"],
         "summary": "Get",
         "description": "Reads the requested store settings resource at `/api/v1/store/settings`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -16476,9 +16258,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Register a customer",
         "description": "Creates a customer account independently from staff administration accounts. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -16616,9 +16396,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Sign in a customer",
         "description": "Authenticates a customer account and issues customer-scoped credentials. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -16756,9 +16534,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Request Password Reset",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/password-reset/request`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -16896,9 +16672,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Confirm Password Reset",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/password-reset/confirm`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -17036,9 +16810,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Request Otp",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/otp/request`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -17176,9 +16948,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Verify Otp",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/otp/verify`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -17316,9 +17086,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Complete Otp Registration",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/otp/register`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -17456,9 +17224,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Refresh",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/refresh`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -17625,9 +17391,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Logout",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/logout`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -17759,9 +17523,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Get Profile",
         "description": "Reads the requested store customers resource at `/api/v1/store/customers/me`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -17926,9 +17688,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Update Profile",
         "description": "Partially updates the requested store customers resource at `/api/v1/store/customers/me`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -18060,9 +17820,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "List Addresses",
         "description": "Reads the requested store customers resource at `/api/v1/store/customers/me/addresses`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -18227,9 +17985,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Create Address",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/me/addresses`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -18430,9 +18186,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Update Address",
         "description": "Partially updates the requested store customers resource at `/api/v1/store/customers/me/addresses/{id}`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -18620,9 +18374,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Delete Address",
         "description": "Removes or deactivates the requested store customers resource at `/api/v1/store/customers/me/addresses/{id}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -18760,9 +18512,7 @@
             }
           }
         },
-        "tags": [
-          "store customers"
-        ],
+        "tags": ["store customers"],
         "summary": "Create Guest Checkout Profile",
         "description": "Creates or executes the requested store customers resource at `/api/v1/store/customers/guest-checkout-profile`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -18957,9 +18707,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin customers"
-        ],
+        "tags": ["admin customers"],
         "summary": "List Customers",
         "description": "Reads the requested admin customers resource at `/api/v1/admin/customers`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -19149,9 +18897,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin customers"
-        ],
+        "tags": ["admin customers"],
         "summary": "Find Customer",
         "description": "Reads the requested admin customers resource at `/api/v1/admin/customers/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -19376,9 +19122,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin customers"
-        ],
+        "tags": ["admin customers"],
         "summary": "Update Status",
         "description": "Partially updates the requested admin customers resource at `/api/v1/admin/customers/{id}/status`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -19568,9 +19312,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin customers"
-        ],
+        "tags": ["admin customers"],
         "summary": "List Notes",
         "description": "Reads the requested admin customers resource at `/api/v1/admin/customers/{id}/notes`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -19793,9 +19535,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin customers"
-        ],
+        "tags": ["admin customers"],
         "summary": "Add Note",
         "description": "Creates or executes the requested admin customers resource at `/api/v1/admin/customers/{id}/notes`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -19986,9 +19726,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "Create Discount",
         "description": "Creates or executes the requested admin discounts resource at `/api/v1/admin/discounts`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -20001,10 +19739,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "COUPON",
-                "AUTOMATIC"
-              ]
+              "enum": ["COUPON", "AUTOMATIC"]
             },
             "description": "Optional query value for mode."
           },
@@ -20014,11 +19749,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PERCENTAGE",
-                "FIXED_AMOUNT",
-                "FREE_SHIPPING"
-              ]
+              "enum": ["PERCENTAGE", "FIXED_AMOUNT", "FREE_SHIPPING"]
             },
             "description": "Optional query value for type."
           },
@@ -20208,9 +19939,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "List Discounts",
         "description": "Reads the requested admin discounts resource at `/api/v1/admin/discounts`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -20400,9 +20129,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "Find Discount",
         "description": "Reads the requested admin discounts resource at `/api/v1/admin/discounts/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -20625,9 +20352,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "Update Discount",
         "description": "Partially updates the requested admin discounts resource at `/api/v1/admin/discounts/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -20852,9 +20577,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "Set Product Restrictions",
         "description": "Replaces or applies the requested admin discounts resource at `/api/v1/admin/discounts/{id}/products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -21079,9 +20802,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "Set Category Restrictions",
         "description": "Replaces or applies the requested admin discounts resource at `/api/v1/admin/discounts/{id}/categories`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -21306,9 +21027,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin discounts"
-        ],
+        "tags": ["admin discounts"],
         "summary": "Set Customer Restrictions",
         "description": "Replaces or applies the requested admin discounts resource at `/api/v1/admin/discounts/{id}/customers`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -21519,9 +21238,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store payments"
-        ],
+        "tags": ["store payments"],
         "summary": "Start Payment",
         "description": "Creates or executes the requested store payments resource at `/api/v1/store/payments/orders/{orderId}/attempts`. Requires a customer bearer token. Supply a stable `Idempotency-Key` when retrying the same logical request. Responses use the standard API envelope."
       }
@@ -21687,9 +21404,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store payments"
-        ],
+        "tags": ["store payments"],
         "summary": "Get Attempt",
         "description": "Reads the requested store payments resource at `/api/v1/store/payments/attempts/{id}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -21890,9 +21605,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store payments"
-        ],
+        "tags": ["store payments"],
         "summary": "Verify Attempt",
         "description": "Creates or executes the requested store payments resource at `/api/v1/store/payments/attempts/{id}/verification`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -22084,9 +21797,7 @@
             }
           }
         },
-        "tags": [
-          "store guest payments"
-        ],
+        "tags": ["store guest payments"],
         "summary": "Start Payment",
         "description": "Creates or executes the requested store guest payments resource at `/api/v1/store/payments/guest/orders/{orderId}/attempts`. Requires the opaque guest cart token issued with the guest cart. Supply a stable `Idempotency-Key` when retrying the same logical request. Responses use the standard API envelope."
       }
@@ -22233,9 +21944,7 @@
             }
           }
         },
-        "tags": [
-          "store guest payments"
-        ],
+        "tags": ["store guest payments"],
         "summary": "Get Attempt",
         "description": "Reads the requested store guest payments resource at `/api/v1/store/payments/guest/attempts/{id}`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -22417,9 +22126,7 @@
             }
           }
         },
-        "tags": [
-          "store guest payments"
-        ],
+        "tags": ["store guest payments"],
         "summary": "Verify Attempt",
         "description": "Creates or executes the requested store guest payments resource at `/api/v1/store/payments/guest/attempts/{id}/verification`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -22609,9 +22316,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin payments"
-        ],
+        "tags": ["admin payments"],
         "summary": "Get Attempt",
         "description": "Reads the requested admin payments resource at `/api/v1/admin/payments/attempts/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -22836,9 +22541,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin payments"
-        ],
+        "tags": ["admin payments"],
         "summary": "Verify Attempt",
         "description": "Creates or executes the requested admin payments resource at `/api/v1/admin/payments/attempts/{id}/verification`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -23073,9 +22776,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin payments"
-        ],
+        "tags": ["admin payments"],
         "summary": "Create Refund",
         "description": "Creates or executes the requested admin payments resource at `/api/v1/admin/payments/attempts/{id}/refunds`. Requires a staff bearer token and the permission declared by the endpoint. Supply a stable `Idempotency-Key` when retrying the same logical request. Responses use the standard API envelope."
       }
@@ -23236,9 +22937,7 @@
             }
           }
         },
-        "tags": [
-          "payment webhooks"
-        ],
+        "tags": ["payment webhooks"],
         "summary": "Process Webhook",
         "description": "Creates or executes the requested payment webhooks resource at `/api/v1/payments/webhooks/{gateway}`. This operation does not require bearer authentication. Responses use the standard API envelope."
       }
@@ -23341,9 +23040,7 @@
             }
           }
         },
-        "tags": [
-          "store content"
-        ],
+        "tags": ["store content"],
         "summary": "Home",
         "description": "Reads the requested store content resource at `/api/v1/store/content/home`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -23480,9 +23177,7 @@
             }
           }
         },
-        "tags": [
-          "store content"
-        ],
+        "tags": ["store content"],
         "summary": "Page",
         "description": "Reads the requested store content resource at `/api/v1/store/content/pages/{slug}`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -23638,9 +23333,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Home",
         "description": "Reads the requested admin content resource at `/api/v1/admin/content/home`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -23829,9 +23522,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Update Home",
         "description": "Partially updates the requested admin content resource at `/api/v1/admin/content/home`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -24022,9 +23713,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Create Slide",
         "description": "Creates or executes the requested admin content resource at `/api/v1/admin/content/home/slides`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -24249,9 +23938,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Update Slide",
         "description": "Replaces or applies the requested admin content resource at `/api/v1/admin/content/home/slides/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -24463,9 +24150,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Delete Slide",
         "description": "Removes or deactivates the requested admin content resource at `/api/v1/admin/content/home/slides/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -24621,9 +24306,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Pages",
         "description": "Reads the requested admin content resource at `/api/v1/admin/content/pages`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -24813,9 +24496,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Page",
         "description": "Reads the requested admin content resource at `/api/v1/admin/content/pages/{slug}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -25038,9 +24719,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin content"
-        ],
+        "tags": ["admin content"],
         "summary": "Upsert Page",
         "description": "Replaces or applies the requested admin content resource at `/api/v1/admin/content/pages/{slug}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -25196,9 +24875,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "List Methods",
         "description": "Reads the requested admin shipping configuration resource at `/api/v1/admin/shipping/methods`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -25387,9 +25064,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "Create Method",
         "description": "Creates or executes the requested admin shipping configuration resource at `/api/v1/admin/shipping/methods`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -25614,9 +25289,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "Update Method",
         "description": "Partially updates the requested admin shipping configuration resource at `/api/v1/admin/shipping/methods/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -25772,9 +25445,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "List Zones",
         "description": "Reads the requested admin shipping configuration resource at `/api/v1/admin/shipping/zones`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -25963,9 +25634,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "Create Zone",
         "description": "Creates or executes the requested admin shipping configuration resource at `/api/v1/admin/shipping/zones`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -26190,9 +25859,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "Update Zone",
         "description": "Partially updates the requested admin shipping configuration resource at `/api/v1/admin/shipping/zones/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -26426,9 +26093,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipping configuration"
-        ],
+        "tags": ["admin shipping configuration"],
         "summary": "Upsert Rate",
         "description": "Replaces or applies the requested admin shipping configuration resource at `/api/v1/admin/shipping/methods/{methodId}/zones/{zoneId}/rate`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -26632,9 +26297,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipments"
-        ],
+        "tags": ["admin shipments"],
         "summary": "List Shipments",
         "description": "Reads the requested admin shipments resource at `/api/v1/admin/shipments`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       },
@@ -26823,9 +26486,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipments"
-        ],
+        "tags": ["admin shipments"],
         "summary": "Create Shipment",
         "description": "Creates or executes the requested admin shipments resource at `/api/v1/admin/shipments`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -27015,9 +26676,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipments"
-        ],
+        "tags": ["admin shipments"],
         "summary": "Get Shipment",
         "description": "Reads the requested admin shipments resource at `/api/v1/admin/shipments/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -27242,9 +26901,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipments"
-        ],
+        "tags": ["admin shipments"],
         "summary": "Update Status",
         "description": "Partially updates the requested admin shipments resource at `/api/v1/admin/shipments/{id}/status`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -27458,9 +27115,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipments"
-        ],
+        "tags": ["admin shipments"],
         "summary": "Track Shipment",
         "description": "Creates or executes the requested admin shipments resource at `/api/v1/admin/shipments/{id}/tracking-refresh`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -27674,9 +27329,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin shipments"
-        ],
+        "tags": ["admin shipments"],
         "summary": "Cancel Shipment",
         "description": "Creates or executes the requested admin shipments resource at `/api/v1/admin/shipments/{id}/cancellation`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -27814,9 +27467,7 @@
             }
           }
         },
-        "tags": [
-          "store shipping"
-        ],
+        "tags": ["store shipping"],
         "summary": "Get Rates",
         "description": "Creates or executes the requested store shipping resource at `/api/v1/store/shipping/rates`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -27982,9 +27633,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store shipping"
-        ],
+        "tags": ["store shipping"],
         "summary": "List Customer Shipments",
         "description": "Reads the requested store shipping resource at `/api/v1/store/shipping/orders/{orderId}/shipments`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -28131,9 +27780,7 @@
             }
           }
         },
-        "tags": [
-          "store shipping"
-        ],
+        "tags": ["store shipping"],
         "summary": "List Guest Shipments",
         "description": "Reads the requested store shipping resource at `/api/v1/store/shipping/guest/orders/{orderId}/shipments`. Requires the opaque guest cart token issued with the guest cart. Responses use the standard API envelope."
       }
@@ -28270,9 +27917,7 @@
             }
           }
         },
-        "tags": [
-          "store reviews"
-        ],
+        "tags": ["store reviews"],
         "summary": "List",
         "description": "Reads the requested store reviews resource at `/api/v1/store/products/{slug}/reviews`. This is a public storefront operation. Responses use the standard API envelope."
       },
@@ -28471,9 +28116,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Create Review",
         "description": "Creates or executes the requested store engagement resource at `/api/v1/store/products/{slug}/reviews`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -28639,9 +28282,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Review Eligibility",
         "description": "Reads the requested store engagement resource at `/api/v1/store/products/{slug}/reviews/eligibility`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -28773,9 +28414,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Wishlist",
         "description": "Reads the requested store engagement resource at `/api/v1/store/customers/me/wishlist`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -28940,9 +28579,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Add Wishlist",
         "description": "Creates or executes the requested store engagement resource at `/api/v1/store/customers/me/wishlist`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -29108,9 +28745,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Check Wishlist",
         "description": "Reads the requested store engagement resource at `/api/v1/store/customers/me/wishlist/check/{productId}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -29300,9 +28935,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Remove Wishlist",
         "description": "Removes or deactivates the requested store engagement resource at `/api/v1/store/customers/me/wishlist/{productId}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -29469,9 +29102,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Subscribe Stock",
         "description": "Creates or executes the requested store engagement resource at `/api/v1/store/customers/me/stock-subscriptions`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -29661,9 +29292,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Unsubscribe Stock",
         "description": "Removes or deactivates the requested store engagement resource at `/api/v1/store/customers/me/stock-subscriptions/{variantId}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -29795,9 +29424,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Notifications",
         "description": "Reads the requested store engagement resource at `/api/v1/store/customers/me/notifications`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -29953,9 +29580,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Mark All Read",
         "description": "Partially updates the requested store engagement resource at `/api/v1/store/customers/me/notifications/read-all`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -30145,9 +29770,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store engagement"
-        ],
+        "tags": ["store engagement"],
         "summary": "Mark Read",
         "description": "Partially updates the requested store engagement resource at `/api/v1/store/customers/me/notifications/{id}/read`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -30191,11 +29814,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "APPROVED",
-                "REJECTED"
-              ]
+              "enum": ["PENDING", "APPROVED", "REJECTED"]
             },
             "description": "Filter results by status."
           }
@@ -30347,9 +29966,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reviews"
-        ],
+        "tags": ["admin reviews"],
         "summary": "List",
         "description": "Reads the requested admin reviews resource at `/api/v1/admin/reviews`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -30574,9 +30191,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reviews"
-        ],
+        "tags": ["admin reviews"],
         "summary": "Moderate",
         "description": "Partially updates the requested admin reviews resource at `/api/v1/admin/reviews/{id}/moderation`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -30591,11 +30206,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "EMAIL",
-                "SMS",
-                "ADMIN"
-              ]
+              "enum": ["EMAIL", "SMS", "ADMIN"]
             },
             "description": "Optional query value for channel."
           },
@@ -30605,11 +30216,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "SENT",
-                "FAILED"
-              ]
+              "enum": ["PENDING", "SENT", "FAILED"]
             },
             "description": "Filter results by status."
           },
@@ -30802,9 +30409,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin notifications"
-        ],
+        "tags": ["admin notifications"],
         "summary": "List",
         "description": "Reads the requested admin notifications resource at `/api/v1/admin/notifications`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -31018,9 +30623,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin notifications"
-        ],
+        "tags": ["admin notifications"],
         "summary": "Mark Read",
         "description": "Partially updates the requested admin notifications resource at `/api/v1/admin/notifications/{id}/read`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -31234,9 +30837,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin notifications"
-        ],
+        "tags": ["admin notifications"],
         "summary": "Retry",
         "description": "Creates or executes the requested admin notifications resource at `/api/v1/admin/notifications/{id}/retry`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -31251,13 +30852,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PRODUCT_IMAGE",
-                "CATEGORY_IMAGE",
-                "SHOP_LOGO",
-                "BANNER",
-                "LIBRARY"
-              ]
+              "enum": ["PRODUCT_IMAGE", "CATEGORY_IMAGE", "SHOP_LOGO", "BANNER", "LIBRARY"]
             },
             "description": "Optional query value for type."
           },
@@ -31267,12 +30862,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PROCESSING",
-                "READY",
-                "FAILED",
-                "DELETED"
-              ]
+              "enum": ["PROCESSING", "READY", "FAILED", "DELETED"]
             },
             "description": "Filter results by status."
           },
@@ -31455,9 +31045,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "List",
         "description": "Reads the requested admin media resource at `/api/v1/admin/media`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -31487,9 +31075,7 @@
                   },
                   {
                     "type": "object",
-                    "required": [
-                      "file"
-                    ],
+                    "required": ["file"],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -31699,9 +31285,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Upload Product Image",
         "description": "Creates or executes the requested admin media resource at `/api/v1/admin/media/products/{productId}/images`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -31731,9 +31315,7 @@
                   },
                   {
                     "type": "object",
-                    "required": [
-                      "file"
-                    ],
+                    "required": ["file"],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -31943,9 +31525,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Upload Category Image",
         "description": "Replaces or applies the requested admin media resource at `/api/v1/admin/media/categories/{categoryId}/image`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -31965,9 +31545,7 @@
                   },
                   {
                     "type": "object",
-                    "required": [
-                      "file"
-                    ],
+                    "required": ["file"],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -32153,9 +31731,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Upload Shop Logo",
         "description": "Replaces or applies the requested admin media resource at `/api/v1/admin/media/shop-logo`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -32369,9 +31945,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Promote Shop Logo",
         "description": "Replaces or applies the requested admin media resource at `/api/v1/admin/media/shop-logo/from-asset/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -32391,9 +31965,7 @@
                   },
                   {
                     "type": "object",
-                    "required": [
-                      "file"
-                    ],
+                    "required": ["file"],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -32579,9 +32151,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Upload Library",
         "description": "Creates or executes the requested admin media resource at `/api/v1/admin/media/library`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -32601,9 +32171,7 @@
                   },
                   {
                     "type": "object",
-                    "required": [
-                      "file"
-                    ],
+                    "required": ["file"],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -32789,9 +32357,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Upload Banner",
         "description": "Creates or executes the requested admin media resource at `/api/v1/admin/media/banners`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -33016,9 +32582,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Update Banner",
         "description": "Partially updates the requested admin media resource at `/api/v1/admin/media/banners/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -33232,9 +32796,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin media"
-        ],
+        "tags": ["admin media"],
         "summary": "Delete",
         "description": "Removes or deactivates the requested admin media resource at `/api/v1/admin/media/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -33337,9 +32899,7 @@
             }
           }
         },
-        "tags": [
-          "store media"
-        ],
+        "tags": ["store media"],
         "summary": "Get Shop Logo",
         "description": "Reads the requested store media resource at `/api/v1/store/media/shop-logo`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -33442,9 +33002,7 @@
             }
           }
         },
-        "tags": [
-          "store media"
-        ],
+        "tags": ["store media"],
         "summary": "List Banners",
         "description": "Reads the requested store media resource at `/api/v1/store/media/banners`. This is a public storefront operation. Responses use the standard API envelope."
       }
@@ -33631,9 +33189,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reports"
-        ],
+        "tags": ["admin reports"],
         "summary": "Overview",
         "description": "Reads the requested admin reports resource at `/api/v1/admin/reports/overview`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -33820,9 +33376,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reports"
-        ],
+        "tags": ["admin reports"],
         "summary": "Sales By Date",
         "description": "Reads the requested admin reports resource at `/api/v1/admin/reports/sales-by-date`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -34025,9 +33579,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reports"
-        ],
+        "tags": ["admin reports"],
         "summary": "Best Selling Products",
         "description": "Reads the requested admin reports resource at `/api/v1/admin/reports/best-selling-products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -34215,9 +33767,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reports"
-        ],
+        "tags": ["admin reports"],
         "summary": "Low Stock Products",
         "description": "Reads the requested admin reports resource at `/api/v1/admin/reports/low-stock-products`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -34404,9 +33954,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reports"
-        ],
+        "tags": ["admin reports"],
         "summary": "Payment Status",
         "description": "Reads the requested admin reports resource at `/api/v1/admin/reports/payment-status`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -34593,9 +34141,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin reports"
-        ],
+        "tags": ["admin reports"],
         "summary": "Refunds",
         "description": "Reads the requested admin reports resource at `/api/v1/admin/reports/refunds`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -34762,9 +34308,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store returns"
-        ],
+        "tags": ["store returns"],
         "summary": "Create",
         "description": "Creates or executes the requested store returns resource at `/api/v1/store/returns`. Requires a customer bearer token. Responses use the standard API envelope."
       },
@@ -34806,10 +34350,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "RETURN",
-                "EXCHANGE"
-              ]
+              "enum": ["RETURN", "EXCHANGE"]
             },
             "description": "Optional query value for type."
           },
@@ -34956,9 +34497,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store returns"
-        ],
+        "tags": ["store returns"],
         "summary": "List",
         "description": "Reads the requested store returns resource at `/api/v1/store/returns`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -35124,9 +34663,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store returns"
-        ],
+        "tags": ["store returns"],
         "summary": "Get",
         "description": "Reads the requested store returns resource at `/api/v1/store/returns/{id}`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -35316,9 +34853,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "store returns"
-        ],
+        "tags": ["store returns"],
         "summary": "Cancel",
         "description": "Partially updates the requested store returns resource at `/api/v1/store/returns/{id}/cancellation`. Requires a customer bearer token. Responses use the standard API envelope."
       }
@@ -35362,10 +34897,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "RETURN",
-                "EXCHANGE"
-              ]
+              "enum": ["RETURN", "EXCHANGE"]
             },
             "description": "Optional query value for type."
           },
@@ -35536,9 +35068,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin returns"
-        ],
+        "tags": ["admin returns"],
         "summary": "List",
         "description": "Reads the requested admin returns resource at `/api/v1/admin/returns`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -35728,9 +35258,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin returns"
-        ],
+        "tags": ["admin returns"],
         "summary": "Get",
         "description": "Reads the requested admin returns resource at `/api/v1/admin/returns/{id}`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -35955,9 +35483,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin returns"
-        ],
+        "tags": ["admin returns"],
         "summary": "Review",
         "description": "Partially updates the requested admin returns resource at `/api/v1/admin/returns/{id}/review`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -36171,9 +35697,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "admin returns"
-        ],
+        "tags": ["admin returns"],
         "summary": "Create Replacement",
         "description": "Creates or executes the requested admin returns resource at `/api/v1/admin/returns/{id}/replacement-order`. Requires a staff bearer token and the permission declared by the endpoint. Responses use the standard API envelope."
       }
@@ -36365,10 +35889,7 @@
             "description": "password value."
           }
         },
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "description": "Schema for Login Dto."
       },
       "RefreshTokenDto": {
@@ -36379,9 +35900,7 @@
             "description": "refresh Token value."
           }
         },
-        "required": [
-          "refreshToken"
-        ],
+        "required": ["refreshToken"],
         "description": "Schema for Refresh Token Dto."
       },
       "LogoutDto": {
@@ -36403,9 +35922,7 @@
             "description": "email value."
           }
         },
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "description": "Schema for Request Password Reset Dto."
       },
       "ConfirmPasswordResetDto": {
@@ -36421,10 +35938,7 @@
             "description": "new Password value."
           }
         },
-        "required": [
-          "token",
-          "newPassword"
-        ],
+        "required": ["token", "newPassword"],
         "description": "Schema for Confirm Password Reset Dto."
       },
       "CreateStaffUserDto": {
@@ -36459,12 +35973,7 @@
             "description": "password value."
           }
         },
-        "required": [
-          "email",
-          "name",
-          "role",
-          "password"
-        ],
+        "required": ["email", "name", "role", "password"],
         "description": "Schema for Create Staff User Dto."
       },
       "UpdateStaffUserDto": {
@@ -36489,12 +35998,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "INVITED",
-              "SUSPENDED",
-              "DISABLED"
-            ],
+            "enum": ["ACTIVE", "INVITED", "SUSPENDED", "DISABLED"],
             "description": "status value."
           }
         },
@@ -36523,22 +36027,12 @@
           },
           "source": {
             "type": "string",
-            "enum": [
-              "COOKIE_BANNER",
-              "ACCOUNT",
-              "CHECKOUT",
-              "ADMIN"
-            ],
+            "enum": ["COOKIE_BANNER", "ACCOUNT", "CHECKOUT", "ADMIN"],
             "default": "COOKIE_BANNER",
             "description": "source value."
           }
         },
-        "required": [
-          "anonymousId",
-          "analyticsGranted",
-          "marketingGranted",
-          "policyVersion"
-        ],
+        "required": ["anonymousId", "analyticsGranted", "marketingGranted", "policyVersion"],
         "description": "Schema for Record Consent Dto."
       },
       "AnalyticsEventDto": {
@@ -36573,12 +36067,7 @@
             "description": "payload value."
           }
         },
-        "required": [
-          "name",
-          "dedupeKey",
-          "occurredAt",
-          "payload"
-        ],
+        "required": ["name", "dedupeKey", "occurredAt", "payload"],
         "description": "Schema for Analytics Event Dto."
       },
       "IngestAnalyticsEventsDto": {
@@ -36602,11 +36091,7 @@
             "description": "events value."
           }
         },
-        "required": [
-          "anonymousId",
-          "sessionId",
-          "events"
-        ],
+        "required": ["anonymousId", "sessionId", "events"],
         "description": "Schema for Ingest Analytics Events Dto."
       },
       "CheckoutCustomerDto": {
@@ -36625,9 +36110,7 @@
             "description": "phone value."
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "description": "Schema for Checkout Customer Dto."
       },
       "CheckoutAddressDto": {
@@ -36666,14 +36149,7 @@
             "description": "postal Code value."
           }
         },
-        "required": [
-          "fullName",
-          "phone",
-          "country",
-          "province",
-          "city",
-          "line1"
-        ],
+        "required": ["fullName", "phone", "country", "province", "city", "line1"],
         "description": "Schema for Checkout Address Dto."
       },
       "InvoiceInformationDto": {
@@ -36724,11 +36200,7 @@
             "description": "customer Note value."
           }
         },
-        "required": [
-          "cartId",
-          "billingAddress",
-          "shippingAddress"
-        ],
+        "required": ["cartId", "billingAddress", "shippingAddress"],
         "description": "Schema for Checkout Dto."
       },
       "Object": {
@@ -36744,9 +36216,7 @@
             "description": "reason value."
           }
         },
-        "required": [
-          "reason"
-        ],
+        "required": ["reason"],
         "description": "Schema for Cancel Order Dto."
       },
       "AddOrderNoteDto": {
@@ -36757,9 +36227,7 @@
             "description": "note value."
           }
         },
-        "required": [
-          "note"
-        ],
+        "required": ["note"],
         "description": "Schema for Add Order Note Dto."
       },
       "CreateCartDto": {
@@ -36788,10 +36256,7 @@
             "description": "quantity value."
           }
         },
-        "required": [
-          "variantId",
-          "quantity"
-        ],
+        "required": ["variantId", "quantity"],
         "description": "Schema for Add Cart Item Dto."
       },
       "UpdateCartItemDto": {
@@ -36803,9 +36268,7 @@
             "description": "quantity value."
           }
         },
-        "required": [
-          "quantity"
-        ],
+        "required": ["quantity"],
         "description": "Schema for Update Cart Item Dto."
       },
       "ApplyDiscountCodeDto": {
@@ -36817,9 +36280,7 @@
             "description": "code value."
           }
         },
-        "required": [
-          "code"
-        ],
+        "required": ["code"],
         "description": "Schema for Apply Discount Code Dto."
       },
       "MergeGuestCartDto": {
@@ -36835,10 +36296,7 @@
             "description": "guest Token value."
           }
         },
-        "required": [
-          "guestCartId",
-          "guestToken"
-        ],
+        "required": ["guestCartId", "guestToken"],
         "description": "Schema for Merge Guest Cart Dto."
       },
       "CreateProductDto": {
@@ -36868,11 +36326,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "ACTIVE",
-              "ARCHIVED"
-            ],
+            "enum": ["DRAFT", "ACTIVE", "ARCHIVED"],
             "description": "status value."
           },
           "brandId": {
@@ -36896,11 +36350,28 @@
             "description": "seo Description value."
           }
         },
-        "required": [
-          "name",
-          "slug"
-        ],
+        "required": ["name", "slug"],
         "description": "Schema for Create Product Dto."
+      },
+      "ConfiguredImageDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "url value."
+          },
+          "altText": {
+            "type": "string",
+            "description": "alt Text value."
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "description": "position value."
+          }
+        },
+        "required": ["url"],
+        "description": "Schema for Configured Image Dto."
       },
       "ConfiguredVariantDto": {
         "type": "object",
@@ -36933,15 +36404,12 @@
               "type": "string"
             },
             "description": "attributes value."
+          },
+          "image": {
+            "$ref": "#/components/schemas/ConfiguredImageDto"
           }
         },
-        "required": [
-          "name",
-          "sku",
-          "price",
-          "stock",
-          "attributes"
-        ],
+        "required": ["name", "sku", "price", "stock", "attributes"],
         "description": "Schema for Configured Variant Dto."
       },
       "CreateConfiguredProductDto": {
@@ -36966,11 +36434,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "ACTIVE",
-              "ARCHIVED"
-            ],
+            "enum": ["DRAFT", "ACTIVE", "ARCHIVED"],
             "description": "status value."
           },
           "brandId": {
@@ -36989,14 +36453,16 @@
               "$ref": "#/components/schemas/ConfiguredVariantDto"
             },
             "description": "variants value."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfiguredImageDto"
+            },
+            "description": "images value."
           }
         },
-        "required": [
-          "name",
-          "slug",
-          "status",
-          "variants"
-        ],
+        "required": ["name", "slug", "status", "variants"],
         "description": "Schema for Create Configured Product Dto."
       },
       "UpdateProductDto": {
@@ -37026,11 +36492,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "ACTIVE",
-              "ARCHIVED"
-            ],
+            "enum": ["DRAFT", "ACTIVE", "ARCHIVED"],
             "description": "status value."
           },
           "brandId": {
@@ -37075,10 +36537,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "DISABLED"
-            ],
+            "enum": ["ACTIVE", "DISABLED"],
             "description": "status value."
           },
           "isDefault": {
@@ -37091,10 +36550,7 @@
             "description": "position value."
           }
         },
-        "required": [
-          "name",
-          "sku"
-        ],
+        "required": ["name", "sku"],
         "description": "Schema for Create Product Variant Dto."
       },
       "UpdateProductVariantDto": {
@@ -37116,10 +36572,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "DISABLED"
-            ],
+            "enum": ["ACTIVE", "DISABLED"],
             "description": "status value."
           },
           "isDefault": {
@@ -37147,9 +36600,7 @@
             "description": "value Ids value."
           }
         },
-        "required": [
-          "valueIds"
-        ],
+        "required": ["valueIds"],
         "description": "Schema for Set Variant Attribute Values Dto."
       },
       "UpsertProductPriceDto": {
@@ -37172,10 +36623,7 @@
             "description": "compare At Amount value."
           }
         },
-        "required": [
-          "currency",
-          "amount"
-        ],
+        "required": ["currency", "amount"],
         "description": "Schema for Upsert Product Price Dto."
       },
       "CreateProductAttributeDto": {
@@ -37192,9 +36640,7 @@
             "description": "position value."
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "description": "Schema for Create Product Attribute Dto."
       },
       "CreateAttributeValueDto": {
@@ -37211,9 +36657,7 @@
             "description": "position value."
           }
         },
-        "required": [
-          "value"
-        ],
+        "required": ["value"],
         "description": "Schema for Create Attribute Value Dto."
       },
       "CreateProductImageDto": {
@@ -37238,9 +36682,7 @@
             "description": "position value."
           }
         },
-        "required": [
-          "url"
-        ],
+        "required": ["url"],
         "description": "Schema for Create Product Image Dto."
       },
       "SetResourceIdsDto": {
@@ -37256,9 +36698,7 @@
             "description": "ids value."
           }
         },
-        "required": [
-          "ids"
-        ],
+        "required": ["ids"],
         "description": "Schema for Set Resource Ids Dto."
       },
       "CreateCategoryDto": {
@@ -37306,10 +36746,7 @@
             "description": "is Active value."
           }
         },
-        "required": [
-          "name",
-          "slug"
-        ],
+        "required": ["name", "slug"],
         "description": "Schema for Create Category Dto."
       },
       "UpdateCategoryDto": {
@@ -37388,10 +36825,7 @@
             "description": "seo Description value."
           }
         },
-        "required": [
-          "name",
-          "slug"
-        ],
+        "required": ["name", "slug"],
         "description": "Schema for Create Brand Dto."
       },
       "UpdateBrandDto": {
@@ -37454,10 +36888,7 @@
             "description": "is Active value."
           }
         },
-        "required": [
-          "name",
-          "slug"
-        ],
+        "required": ["name", "slug"],
         "description": "Schema for Create Product Collection Dto."
       },
       "UpdateProductCollectionDto": {
@@ -37511,10 +36942,7 @@
             "description": "Defaults to the shop setting."
           }
         },
-        "required": [
-          "variantId",
-          "currentStock"
-        ],
+        "required": ["variantId", "currentStock"],
         "description": "Schema for Initialize Inventory Dto."
       },
       "CreateStockReservationDto": {
@@ -37541,12 +36969,7 @@
             "description": "expires At value."
           }
         },
-        "required": [
-          "variantId",
-          "quantity",
-          "externalReference",
-          "expiresAt"
-        ],
+        "required": ["variantId", "quantity", "externalReference", "expiresAt"],
         "description": "Schema for Create Stock Reservation Dto."
       },
       "ExpireReservationsDto": {
@@ -37570,9 +36993,7 @@
             "description": "low Stock Threshold value."
           }
         },
-        "required": [
-          "lowStockThreshold"
-        ],
+        "required": ["lowStockThreshold"],
         "description": "Schema for Update Low Stock Threshold Dto."
       },
       "AdjustInventoryDto": {
@@ -37593,10 +37014,7 @@
             "description": "reference value."
           }
         },
-        "required": [
-          "quantityDelta",
-          "reason"
-        ],
+        "required": ["quantityDelta", "reason"],
         "description": "Schema for Adjust Inventory Dto."
       },
       "RestoreStockDto": {
@@ -37616,10 +37034,7 @@
             "description": "reason value."
           }
         },
-        "required": [
-          "quantity",
-          "reference"
-        ],
+        "required": ["quantity", "reference"],
         "description": "Schema for Restore Stock Dto."
       },
       "UpdateShopSettingsDto": {
@@ -37743,11 +37158,7 @@
             "description": "marketing Consent value."
           }
         },
-        "required": [
-          "email",
-          "name",
-          "password"
-        ],
+        "required": ["email", "name", "password"],
         "description": "Schema for Register Customer Dto."
       },
       "LoginCustomerDto": {
@@ -37764,10 +37175,7 @@
             "description": "password value."
           }
         },
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "description": "Schema for Login Customer Dto."
       },
       "RequestCustomerPasswordResetDto": {
@@ -37779,9 +37187,7 @@
             "description": "email value."
           }
         },
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "description": "Schema for Request Customer Password Reset Dto."
       },
       "ConfirmCustomerPasswordResetDto": {
@@ -37797,10 +37203,7 @@
             "description": "new Password value."
           }
         },
-        "required": [
-          "token",
-          "newPassword"
-        ],
+        "required": ["token", "newPassword"],
         "description": "Schema for Confirm Customer Password Reset Dto."
       },
       "RequestCustomerOtpDto": {
@@ -37812,9 +37215,7 @@
             "description": "phone value."
           }
         },
-        "required": [
-          "phone"
-        ],
+        "required": ["phone"],
         "description": "Schema for Request Customer Otp Dto."
       },
       "VerifyCustomerOtpDto": {
@@ -37831,10 +37232,7 @@
             "description": "code value."
           }
         },
-        "required": [
-          "phone",
-          "code"
-        ],
+        "required": ["phone", "code"],
         "description": "Schema for Verify Customer Otp Dto."
       },
       "CompleteCustomerOtpRegistrationDto": {
@@ -37860,10 +37258,7 @@
             "description": "marketing Consent value."
           }
         },
-        "required": [
-          "registrationToken",
-          "name"
-        ],
+        "required": ["registrationToken", "name"],
         "description": "Schema for Complete Customer Otp Registration Dto."
       },
       "RefreshCustomerTokenDto": {
@@ -37874,9 +37269,7 @@
             "description": "refresh Token value."
           }
         },
-        "required": [
-          "refreshToken"
-        ],
+        "required": ["refreshToken"],
         "description": "Schema for Refresh Customer Token Dto."
       },
       "LogoutCustomerDto": {
@@ -37916,10 +37309,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "SHIPPING",
-              "BILLING"
-            ],
+            "enum": ["SHIPPING", "BILLING"],
             "example": "SHIPPING",
             "description": "type value."
           },
@@ -37960,15 +37350,7 @@
             "description": "is Default value."
           }
         },
-        "required": [
-          "type",
-          "fullName",
-          "phone",
-          "country",
-          "province",
-          "city",
-          "line1"
-        ],
+        "required": ["type", "fullName", "phone", "country", "province", "city", "line1"],
         "description": "Schema for Create Customer Address Dto."
       },
       "UpdateCustomerAddressDto": {
@@ -37976,10 +37358,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "SHIPPING",
-              "BILLING"
-            ],
+            "enum": ["SHIPPING", "BILLING"],
             "example": "SHIPPING",
             "description": "type value."
           },
@@ -38045,9 +37424,7 @@
             "description": "metadata value."
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "description": "Schema for Create Guest Checkout Profile Dto."
       },
       "UpdateCustomerStatusDto": {
@@ -38055,19 +37432,12 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "GUEST",
-              "SUSPENDED",
-              "DISABLED"
-            ],
+            "enum": ["ACTIVE", "GUEST", "SUSPENDED", "DISABLED"],
             "example": "ACTIVE",
             "description": "status value."
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "description": "Schema for Update Customer Status Dto."
       },
       "AddCustomerNoteDto": {
@@ -38078,9 +37448,7 @@
             "description": "note value."
           }
         },
-        "required": [
-          "note"
-        ],
+        "required": ["note"],
         "description": "Schema for Add Customer Note Dto."
       },
       "CreateDiscountDto": {
@@ -38101,19 +37469,12 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "COUPON",
-              "AUTOMATIC"
-            ],
+            "enum": ["COUPON", "AUTOMATIC"],
             "description": "mode value."
           },
           "type": {
             "type": "string",
-            "enum": [
-              "PERCENTAGE",
-              "FIXED_AMOUNT",
-              "FREE_SHIPPING"
-            ],
+            "enum": ["PERCENTAGE", "FIXED_AMOUNT", "FREE_SHIPPING"],
             "description": "type value."
           },
           "value": {
@@ -38172,11 +37533,7 @@
             "description": "is Active value."
           }
         },
-        "required": [
-          "name",
-          "mode",
-          "type"
-        ],
+        "required": ["name", "mode", "type"],
         "description": "Schema for Create Discount Dto."
       },
       "UpdateDiscountDto": {
@@ -38197,19 +37554,12 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "COUPON",
-              "AUTOMATIC"
-            ],
+            "enum": ["COUPON", "AUTOMATIC"],
             "description": "mode value."
           },
           "type": {
             "type": "string",
-            "enum": [
-              "PERCENTAGE",
-              "FIXED_AMOUNT",
-              "FREE_SHIPPING"
-            ],
+            "enum": ["PERCENTAGE", "FIXED_AMOUNT", "FREE_SHIPPING"],
             "description": "type value."
           },
           "value": {
@@ -38283,9 +37633,7 @@
             "description": "ids value."
           }
         },
-        "required": [
-          "ids"
-        ],
+        "required": ["ids"],
         "description": "Schema for Set Discount Resource Ids Dto."
       },
       "StartPaymentDto": {
@@ -38293,12 +37641,7 @@
         "properties": {
           "gateway": {
             "type": "string",
-            "enum": [
-              "DEVELOPMENT",
-              "MANUAL_BANK_TRANSFER",
-              "CASH_ON_DELIVERY",
-              "ZARINPAL"
-            ],
+            "enum": ["DEVELOPMENT", "MANUAL_BANK_TRANSFER", "CASH_ON_DELIVERY", "ZARINPAL"],
             "description": "gateway value."
           },
           "callbackUrl": {
@@ -38306,9 +37649,7 @@
             "description": "Frontend return URL; never used as proof of payment."
           }
         },
-        "required": [
-          "gateway"
-        ],
+        "required": ["gateway"],
         "description": "Schema for Start Payment Dto."
       },
       "VerifyPaymentDto": {
@@ -38320,9 +37661,7 @@
             "description": "payload value."
           }
         },
-        "required": [
-          "payload"
-        ],
+        "required": ["payload"],
         "description": "Schema for Verify Payment Dto."
       },
       "CreateRefundDto": {
@@ -38338,9 +37677,7 @@
             "description": "reason value."
           }
         },
-        "required": [
-          "amount"
-        ],
+        "required": ["amount"],
         "description": "Schema for Create Refund Dto."
       },
       "HomePromoTileDto": {
@@ -38374,13 +37711,7 @@
             "description": "image Url value."
           }
         },
-        "required": [
-          "title",
-          "body",
-          "cta",
-          "linkUrl",
-          "imageUrl"
-        ],
+        "required": ["title", "body", "cta", "linkUrl", "imageUrl"],
         "description": "Schema for Home Promo Tile Dto."
       },
       "HomeTestimonialDto": {
@@ -38405,11 +37736,7 @@
             "description": "quote value."
           }
         },
-        "required": [
-          "name",
-          "city",
-          "quote"
-        ],
+        "required": ["name", "city", "quote"],
         "description": "Schema for Home Testimonial Dto."
       },
       "UpdateHomeContentDto": {
@@ -38514,10 +37841,7 @@
             "description": "is Active value."
           }
         },
-        "required": [
-          "title",
-          "imageUrl"
-        ],
+        "required": ["title", "imageUrl"],
         "description": "Schema for Upsert Home Slide Dto."
       },
       "UpsertContentPageDto": {
@@ -38547,18 +37871,11 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED"
-            ],
+            "enum": ["DRAFT", "PUBLISHED"],
             "description": "status value."
           }
         },
-        "required": [
-          "title",
-          "bodyMarkdown",
-          "status"
-        ],
+        "required": ["title", "bodyMarkdown", "status"],
         "description": "Schema for Upsert Content Page Dto."
       },
       "CreateShippingMethodDto": {
@@ -38579,19 +37896,13 @@
           },
           "provider": {
             "type": "string",
-            "enum": [
-              "LOCAL"
-            ],
+            "enum": ["LOCAL"],
             "default": "LOCAL",
             "description": "provider value."
           },
           "type": {
             "type": "string",
-            "enum": [
-              "STANDARD",
-              "EXPRESS",
-              "LOCAL_PICKUP"
-            ],
+            "enum": ["STANDARD", "EXPRESS", "LOCAL_PICKUP"],
             "description": "type value."
           },
           "currency": {
@@ -38663,19 +37974,13 @@
           },
           "provider": {
             "type": "string",
-            "enum": [
-              "LOCAL"
-            ],
+            "enum": ["LOCAL"],
             "default": "LOCAL",
             "description": "provider value."
           },
           "type": {
             "type": "string",
-            "enum": [
-              "STANDARD",
-              "EXPRESS",
-              "LOCAL_PICKUP"
-            ],
+            "enum": ["STANDARD", "EXPRESS", "LOCAL_PICKUP"],
             "description": "type value."
           },
           "currency": {
@@ -38727,9 +38032,7 @@
             "description": "name value."
           },
           "countries": {
-            "example": [
-              "US"
-            ],
+            "example": ["US"],
             "type": "array",
             "items": {
               "type": "string",
@@ -38738,9 +38041,7 @@
             "description": "countries value."
           },
           "provinces": {
-            "example": [
-              "CA"
-            ],
+            "example": ["CA"],
             "type": "array",
             "items": {
               "type": "string",
@@ -38759,10 +38060,7 @@
             "description": "is Active value."
           }
         },
-        "required": [
-          "name",
-          "countries"
-        ],
+        "required": ["name", "countries"],
         "description": "Schema for Create Shipping Zone Dto."
       },
       "UpdateShippingZoneDto": {
@@ -38773,9 +38071,7 @@
             "description": "name value."
           },
           "countries": {
-            "example": [
-              "US"
-            ],
+            "example": ["US"],
             "type": "array",
             "items": {
               "type": "string",
@@ -38784,9 +38080,7 @@
             "description": "countries value."
           },
           "provinces": {
-            "example": [
-              "CA"
-            ],
+            "example": ["CA"],
             "type": "array",
             "items": {
               "type": "string",
@@ -38834,9 +38128,7 @@
             "description": "is Active value."
           }
         },
-        "required": [
-          "price"
-        ],
+        "required": ["price"],
         "description": "Schema for Upsert Shipping Rate Dto."
       },
       "CreateShipmentDto": {
@@ -38853,9 +38145,7 @@
             "description": "shipping Method ID value."
           }
         },
-        "required": [
-          "orderId"
-        ],
+        "required": ["orderId"],
         "description": "Schema for Create Shipment Dto."
       },
       "UpdateShipmentStatusDto": {
@@ -38884,9 +38174,7 @@
             "description": "estimated Delivery At value."
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "description": "Schema for Update Shipment Status Dto."
       },
       "ShippingAddressDto": {
@@ -38925,14 +38213,7 @@
             "description": "postal Code value."
           }
         },
-        "required": [
-          "fullName",
-          "phone",
-          "country",
-          "province",
-          "city",
-          "line1"
-        ],
+        "required": ["fullName", "phone", "country", "province", "city", "line1"],
         "description": "Schema for Shipping Address Dto."
       },
       "ShippingQuoteDto": {
@@ -38957,11 +38238,7 @@
             "description": "free Shipping Discount value."
           }
         },
-        "required": [
-          "address",
-          "orderSubtotal",
-          "currency"
-        ],
+        "required": ["address", "orderSubtotal", "currency"],
         "description": "Schema for Shipping Quote Dto."
       },
       "CreateProductReviewDto": {
@@ -38985,10 +38262,7 @@
             "description": "body value."
           }
         },
-        "required": [
-          "rating",
-          "body"
-        ],
+        "required": ["rating", "body"],
         "description": "Schema for Create Product Review Dto."
       },
       "AddWishlistItemDto": {
@@ -39000,9 +38274,7 @@
             "description": "product ID value."
           }
         },
-        "required": [
-          "productId"
-        ],
+        "required": ["productId"],
         "description": "Schema for Add Wishlist Item Dto."
       },
       "SubscribeStockDto": {
@@ -39014,9 +38286,7 @@
             "description": "variant ID value."
           }
         },
-        "required": [
-          "variantId"
-        ],
+        "required": ["variantId"],
         "description": "Schema for Subscribe Stock Dto."
       },
       "ModerateReviewDto": {
@@ -39024,16 +38294,11 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "APPROVED",
-              "REJECTED"
-            ],
+            "enum": ["APPROVED", "REJECTED"],
             "description": "status value."
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "description": "Schema for Moderate Review Dto."
       },
       "UploadProductImageDto": {
@@ -39183,10 +38448,7 @@
             "description": "reason value."
           }
         },
-        "required": [
-          "orderItemId",
-          "quantity"
-        ],
+        "required": ["orderItemId", "quantity"],
         "description": "Schema for Create Return Request Item Dto."
       },
       "CreateReturnRequestDto": {
@@ -39199,10 +38461,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "RETURN",
-              "EXCHANGE"
-            ],
+            "enum": ["RETURN", "EXCHANGE"],
             "description": "type value."
           },
           "reason": {
@@ -39224,12 +38483,7 @@
             "description": "items value."
           }
         },
-        "required": [
-          "orderId",
-          "type",
-          "reason",
-          "items"
-        ],
+        "required": ["orderId", "type", "reason", "items"],
         "description": "Schema for Create Return Request Dto."
       },
       "ReviewReturnRequestDto": {
@@ -39237,12 +38491,7 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "APPROVED",
-              "REJECTED",
-              "RECEIVED",
-              "CLOSED"
-            ],
+            "enum": ["APPROVED", "REJECTED", "RECEIVED", "CLOSED"],
             "description": "status value."
           },
           "adminNote": {
@@ -39251,18 +38500,13 @@
             "description": "admin Note value."
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "description": "Schema for Review Return Request Dto."
       },
       "ApiError": {
         "type": "object",
         "description": "One machine-readable API error.",
-        "required": [
-          "code",
-          "message"
-        ],
+        "required": ["code", "message"],
         "properties": {
           "code": {
             "type": "string",
@@ -39288,11 +38532,7 @@
       "ApiErrorResponse": {
         "type": "object",
         "description": "Standard error envelope returned by the global exception filter.",
-        "required": [
-          "data",
-          "meta",
-          "errors"
-        ],
+        "required": ["data", "meta", "errors"],
         "properties": {
           "data": {
             "nullable": true,
@@ -39301,10 +38541,7 @@
           },
           "meta": {
             "type": "object",
-            "required": [
-              "timestamp",
-              "path"
-            ],
+            "required": ["timestamp", "path"],
             "properties": {
               "timestamp": {
                 "type": "string",
@@ -39332,11 +38569,7 @@
       "ApiSuccessResponse": {
         "type": "object",
         "description": "Standard successful response envelope returned by the global interceptor.",
-        "required": [
-          "data",
-          "meta",
-          "errors"
-        ],
+        "required": ["data", "meta", "errors"],
         "properties": {
           "data": {
             "description": "Operation-specific response data."

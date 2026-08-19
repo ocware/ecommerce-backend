@@ -231,8 +231,15 @@ export class CatalogService {
             brandId: dto.brandId,
             primaryCategoryId: dto.categoryId ?? undefined,
             publishedAt: dto.status === ProductStatus.ACTIVE ? new Date() : undefined,
-            categories: dto.categoryId
-              ? { create: { categoryId: dto.categoryId } }
+            categories: dto.categoryId ? { create: { categoryId: dto.categoryId } } : undefined,
+            images: dto.images?.length
+              ? {
+                  create: dto.images.map((image, position) => ({
+                    url: image.url,
+                    altText: image.altText,
+                    position: image.position ?? position,
+                  })),
+                }
               : undefined,
           },
         });
@@ -294,6 +301,17 @@ export class CatalogService {
               },
             },
           });
+          if (row.image) {
+            await transaction.productImage.create({
+              data: {
+                productId: product.id,
+                variantId: variant.id,
+                url: row.image.url,
+                altText: row.image.altText,
+                position: row.image.position ?? 0,
+              },
+            });
+          }
           const valueIds = Object.entries(row.attributes).map(([name, value]) =>
             attributeValues.get(name)!.get(value)!,
           );
@@ -454,7 +472,9 @@ export class CatalogService {
             ...(dto.name !== undefined ? { name: dto.name } : {}),
             ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
             ...(dto.description !== undefined ? { description: dto.description } : {}),
-            ...(dto.shortDescription !== undefined ? { shortDescription: dto.shortDescription } : {}),
+            ...(dto.shortDescription !== undefined
+              ? { shortDescription: dto.shortDescription }
+              : {}),
             ...(dto.status !== undefined ? { status: dto.status } : {}),
             ...(dto.brandId !== undefined ? { brandId: dto.brandId } : {}),
             ...(dto.primaryCategoryId !== undefined
@@ -823,10 +843,10 @@ export class CatalogService {
     const specialSort =
       Boolean(query.inStock) ||
       [
-      ProductSort.PriceAsc,
-      ProductSort.PriceDesc,
-      ProductSort.Bestselling,
-      ProductSort.Popular,
+        ProductSort.PriceAsc,
+        ProductSort.PriceDesc,
+        ProductSort.Bestselling,
+        ProductSort.Popular,
       ].includes(query.sort);
     const [databaseTotal, foundItems] = await this.prisma.$transaction([
       this.prisma.product.count({ where }),
@@ -852,9 +872,7 @@ export class CatalogService {
       rawItems = rawItems.filter((product) =>
         product.variants.some(
           (variant) =>
-            (variant.inventory?.currentStock ?? 0) -
-              (variant.inventory?.reservedStock ?? 0) >
-            0,
+            (variant.inventory?.currentStock ?? 0) - (variant.inventory?.reservedStock ?? 0) > 0,
         ),
       );
     }
@@ -877,30 +895,18 @@ export class CatalogService {
               variantId: { in: variantIds },
               order: {
                 paymentStatus: {
-                  in: [
-                    'PAID',
-                    'PARTIALLY_REFUNDED',
-                    'REFUNDED',
-                  ],
+                  in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'],
                 },
               },
             },
             _sum: { quantity: true },
           })
         : [];
-      const score = new Map(
-        sales.map((row) => [row.variantId, row._sum.quantity ?? 0]),
-      );
+      const score = new Map(sales.map((row) => [row.variantId, row._sum.quantity ?? 0]));
       rawItems.sort(
         (left, right) =>
-          right.variants.reduce(
-            (sum, variant) => sum + (score.get(variant.id) ?? 0),
-            0,
-          ) -
-          left.variants.reduce(
-            (sum, variant) => sum + (score.get(variant.id) ?? 0),
-            0,
-          ),
+          right.variants.reduce((sum, variant) => sum + (score.get(variant.id) ?? 0), 0) -
+          left.variants.reduce((sum, variant) => sum + (score.get(variant.id) ?? 0), 0),
       );
     } else if (query.sort === ProductSort.Popular) {
       const productIds = rawItems.map((product) => product.id);
@@ -926,10 +932,7 @@ export class CatalogService {
       for (const row of reviews) {
         score.set(row.productId, (score.get(row.productId) ?? 0) + row._count);
       }
-      rawItems.sort(
-        (left, right) =>
-          (score.get(right.id) ?? 0) - (score.get(left.id) ?? 0),
-      );
+      rawItems.sort((left, right) => (score.get(right.id) ?? 0) - (score.get(left.id) ?? 0));
     }
     if (specialSort) rawItems = rawItems.slice(skip, skip + query.limit);
 
@@ -956,9 +959,12 @@ export class CatalogService {
     return this.paginated(items, total, query.page, query.limit);
   }
 
-  private minimumProductPrice(product: {
-    variants: Array<{ prices: Array<{ amount: Prisma.Decimal }> }>;
-  }, direction: number): Prisma.Decimal {
+  private minimumProductPrice(
+    product: {
+      variants: Array<{ prices: Array<{ amount: Prisma.Decimal }> }>;
+    },
+    direction: number,
+  ): Prisma.Decimal {
     const prices = product.variants.flatMap((variant) =>
       variant.prices.map((price) => price.amount),
     );

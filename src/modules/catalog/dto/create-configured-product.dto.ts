@@ -18,6 +18,26 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+class ConfiguredImageDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(2048)
+  url!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  altText?: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  position?: number;
+}
+
 class ConfiguredVariantDto {
   @ApiProperty()
   @IsString()
@@ -48,6 +68,12 @@ class ConfiguredVariantDto {
   @ApiProperty({ type: 'object', additionalProperties: { type: 'string' } })
   @IsObject()
   attributes!: Record<string, string>;
+
+  @ApiPropertyOptional({ type: ConfiguredImageDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ConfiguredImageDto)
+  image?: ConfiguredImageDto;
 }
 
 export class CreateConfiguredProductDto {
@@ -92,4 +118,12 @@ export class CreateConfiguredProductDto {
   @ValidateNested({ each: true })
   @Type(() => ConfiguredVariantDto)
   variants!: ConfiguredVariantDto[];
+
+  @ApiPropertyOptional({ type: [ConfiguredImageDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => ConfiguredImageDto)
+  images?: ConfiguredImageDto[];
 }

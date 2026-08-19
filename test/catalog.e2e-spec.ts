@@ -22,6 +22,7 @@ describe('Catalog API', () => {
   let app: INestApplication;
   const catalogService = {
     createProduct: jest.fn(),
+    createConfiguredProduct: jest.fn(),
     listStoreProducts: jest.fn(),
     findStoreProduct: jest.fn(),
   };
@@ -124,6 +125,53 @@ describe('Catalog API', () => {
       });
 
     expect(catalogService.createProduct).not.toHaveBeenCalled();
+  });
+
+  it('accepts images as part of atomic configured product creation', async () => {
+    catalogService.createConfiguredProduct.mockResolvedValue({
+      id: 'configured-product-id',
+      name: 'Atomic Ring',
+      slug: 'atomic-ring',
+      status: ProductStatus.ACTIVE,
+    });
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .post('/api/v1/admin/products/configured')
+      .set('Authorization', 'Bearer token')
+      .send({
+        name: 'Atomic Ring',
+        slug: 'atomic-ring',
+        status: ProductStatus.ACTIVE,
+        images: [{ url: 'https://cdn.example.com/gallery.jpg', position: 0 }],
+        variants: [
+          {
+            name: 'Size 60',
+            sku: 'ATOMIC-60',
+            price: '1250000',
+            stock: 3,
+            attributes: { size: '60' },
+            image: { url: 'https://cdn.example.com/variant.jpg' },
+          },
+        ],
+      })
+      .expect(201)
+      .expect(({ body }: { body: ApiResponseBody }) => {
+        expect(body.data.id).toBe('configured-product-id');
+      });
+
+    expect(catalogService.createConfiguredProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        images: [expect.objectContaining({ url: 'https://cdn.example.com/gallery.jpg' })],
+        variants: [
+          expect.objectContaining({
+            image: expect.objectContaining({
+              url: 'https://cdn.example.com/variant.jpg',
+            }) as Record<string, unknown>,
+          }),
+        ],
+      }),
+    );
   });
 
   it('supports transformed pagination and storefront product search', async () => {

@@ -110,6 +110,111 @@ describe('CatalogService', () => {
     );
   });
 
+  describe('createConfiguredProduct', () => {
+    const configuredDto = {
+      name: 'Atomic Ring',
+      slug: 'atomic-ring',
+      status: ProductStatus.ACTIVE,
+      images: [
+        {
+          url: 'https://cdn.example.com/gallery.jpg',
+          altText: 'Atomic Ring',
+          position: 2,
+        },
+      ],
+      variants: [
+        {
+          name: 'Size 60',
+          sku: 'atomic-60',
+          price: '1250000',
+          stock: 3,
+          attributes: {},
+          image: {
+            url: 'https://cdn.example.com/variant.jpg',
+            altText: 'Atomic Ring size 60',
+          },
+        },
+      ],
+    };
+
+    it('persists gallery and variant images inside the product transaction', async () => {
+      const transaction = {
+        shopSettings: {
+          findUnique: jest.fn().mockResolvedValue({ lowStockThreshold: 2 }),
+        },
+        product: {
+          create: jest.fn().mockResolvedValue(product),
+        },
+        productVariant: {
+          create: jest.fn().mockResolvedValue(variant),
+        },
+        productImage: {
+          create: jest.fn().mockResolvedValue({ id: 'variant-image-id' }),
+        },
+        productAttribute: { create: jest.fn() },
+        productAttributeValue: { create: jest.fn() },
+        variantAttributeValue: { createMany: jest.fn() },
+      };
+      prisma.$transaction.mockImplementation((operation: (tx: unknown) => unknown) =>
+        Promise.resolve(operation(transaction)),
+      );
+
+      await service.createConfiguredProduct(configuredDto);
+
+      expect(transaction.product.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          images: {
+            create: [
+              {
+                url: configuredDto.images[0].url,
+                altText: configuredDto.images[0].altText,
+                position: 2,
+              },
+            ],
+          },
+        }) as Record<string, unknown>,
+      });
+      expect(transaction.productVariant.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ sku: 'ATOMIC-60' }) as Record<string, unknown>,
+      });
+      expect(transaction.productImage.create).toHaveBeenCalledWith({
+        data: {
+          productId: product.id,
+          variantId: variant.id,
+          url: configuredDto.variants[0].image.url,
+          altText: configuredDto.variants[0].image.altText,
+          position: 0,
+        },
+      });
+    });
+
+    it('does not return a product when a nested configured write fails', async () => {
+      const transaction = {
+        shopSettings: {
+          findUnique: jest.fn().mockResolvedValue({ lowStockThreshold: 2 }),
+        },
+        product: {
+          create: jest.fn().mockResolvedValue(product),
+        },
+        productVariant: {
+          create: jest.fn().mockRejectedValue(new Error('variant write failed')),
+        },
+        productImage: { create: jest.fn() },
+        productAttribute: { create: jest.fn() },
+        productAttributeValue: { create: jest.fn() },
+        variantAttributeValue: { createMany: jest.fn() },
+      };
+      prisma.$transaction.mockImplementation((operation: (tx: unknown) => unknown) =>
+        Promise.resolve(operation(transaction)),
+      );
+
+      await expect(service.createConfiguredProduct(configuredDto)).rejects.toThrow(
+        'variant write failed',
+      );
+      expect(prisma.product.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
   describe('archiveProduct', () => {
     it('archives an existing product without deleting the row', async () => {
       prisma.product.findUnique.mockResolvedValue(product);
@@ -148,10 +253,7 @@ describe('CatalogService', () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
       await expect(service.archiveProduct('missing-id')).rejects.toMatchObject({
-        response: expect.objectContaining({ code: 'PRODUCT_NOT_FOUND' }) as Record<
-          string,
-          unknown
-        >,
+        response: expect.objectContaining({ code: 'PRODUCT_NOT_FOUND' }) as Record<string, unknown>,
       });
 
       expect(prisma.product.update).not.toHaveBeenCalled();
@@ -221,9 +323,7 @@ describe('CatalogService', () => {
     it('rejects nesting a category under itself', async () => {
       prisma.category.findUnique.mockResolvedValue(root);
 
-      await expect(
-        service.updateCategory(root.id, { parentId: root.id }),
-      ).rejects.toMatchObject({
+      await expect(service.updateCategory(root.id, { parentId: root.id })).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'INVALID_CATEGORY_PARENT' }) as Record<
           string,
           unknown
@@ -245,9 +345,7 @@ describe('CatalogService', () => {
         },
       );
 
-      await expect(
-        service.updateCategory(root.id, { parentId: child.id }),
-      ).rejects.toMatchObject({
+      await expect(service.updateCategory(root.id, { parentId: child.id })).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'INVALID_CATEGORY_PARENT' }) as Record<
           string,
           unknown
